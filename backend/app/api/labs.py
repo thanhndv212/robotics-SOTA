@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify
 from app import db
 from app.models import Lab
 from sqlalchemy import or_
+import asyncio
+import threading
+from app.services.lab_paper_scraper import LabPaperScraper
 
 labs_bp = Blueprint('labs', __name__)
 
@@ -14,6 +17,7 @@ def get_labs():
         country = request.args.get('country')
         focus_area = request.args.get('focus_area')
         search = request.args.get('search')
+        include_papers = request.args.get('include_papers', 'false').lower() == 'true'
         
         # Build query
         query = Lab.query
@@ -34,7 +38,7 @@ def get_labs():
             )
         
         labs = query.all()
-        return jsonify([lab.to_dict() for lab in labs])
+        return jsonify([lab.to_dict(include_papers=include_papers) for lab in labs])
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -44,8 +48,9 @@ def get_labs():
 def get_lab(lab_id):
     """Get a specific lab by ID"""
     try:
+        include_papers = request.args.get('include_papers', 'true').lower() == 'true'
         lab = Lab.query.get_or_404(lab_id)
-        return jsonify(lab.to_dict())
+        return jsonify(lab.to_dict(include_papers=include_papers))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -135,6 +140,77 @@ def get_geographic_data():
             })
         
         return jsonify(geographic_data)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@labs_bp.route('/scrape-papers', methods=['POST'])
+def scrape_papers():
+    """Trigger paper scraping for specified labs"""
+    try:
+        data = request.get_json()
+        lab_ids = data.get('lab_ids', [])
+        sources = data.get('sources', ['arxiv'])  # arxiv, scholar, website
+        max_papers = data.get('max_papers', 5)
+        
+        if not lab_ids:
+            return jsonify({'error': 'No lab IDs provided'}), 400
+        
+        # Get labs
+        labs = Lab.query.filter(Lab.id.in_(lab_ids)).all()
+        if not labs:
+            return jsonify({'error': 'No valid labs found'}), 404
+        
+        def run_scraping():
+            """Run scraping in background thread"""
+            async def async_scrape():
+                scraper = LabPaperScraper()
+                results = []
+                for lab in labs:
+                    try:
+                        lab_results = await scraper.scrape_lab_papers(
+                            lab, sources=sources, max_papers=max_papers
+                        )
+                        results.append({
+                            'lab_id': lab.id,
+                            'lab_name': lab.name,
+                            'papers_found': len(lab_results),
+                            'success': True
+                        })
+                    except Exception as e:
+                        results.append({
+                            'lab_id': lab.id,
+                            'lab_name': lab.name,
+                            'error': str(e),
+                            'success': False
+                        })
+                return results
+            
+            return asyncio.run(async_scrape())
+        
+        # Run scraping in background thread
+        results = []
+        
+        def background_scrape():
+            nonlocal results
+            results = run_scraping()
+        
+        thread = threading.Thread(target=background_scrape)
+        thread.start()
+        thread.join(timeout=60)  # 60 second timeout
+        
+        if thread.is_alive():
+            return jsonify({
+                'message': 'Scraping started in background',
+                'status': 'running'
+            }), 202
+        
+        return jsonify({
+            'message': 'Paper scraping completed',
+            'results': results,
+            'status': 'completed'
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

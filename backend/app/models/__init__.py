@@ -62,8 +62,8 @@ class Lab(db.Model):
         else:
             self.funding_sources = None
     
-    def to_dict(self):
-        return {
+    def to_dict(self, include_papers=False):
+        result = {
             'id': self.id,
             'name': self.name,
             'pi': self.pi,
@@ -80,6 +80,12 @@ class Lab(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+        
+        if include_papers:
+            result['papers'] = [paper.to_dict() for paper in self.papers]
+            result['paper_count'] = len(self.papers)
+        
+        return result
 
 
 class Paper(db.Model):
