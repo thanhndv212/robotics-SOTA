@@ -95,6 +95,7 @@ class Paper(db.Model):
     arxiv_id = db.Column(db.String(50), nullable=True, unique=True)
     doi = db.Column(db.String(100), nullable=True)
     pdf_url = db.Column(db.String(500), nullable=True)
+    website_url = db.Column(db.String(500), nullable=True)
     citation_count = db.Column(db.Integer, default=0)
     research_areas = db.Column(db.Text, nullable=True)  # JSON string
     keywords = db.Column(db.Text, nullable=True)  # JSON string
