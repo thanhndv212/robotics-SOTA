@@ -29,12 +29,12 @@ def get_papers():
                 or_(
                     Paper.title.ilike(f'%{search}%'),
                     Paper.abstract.ilike(f'%{search}%'),
-                    Paper.authors.any(search)
+                    Paper.authors.ilike(f'%{search}%')
                 )
             )
             
         if research_area:
-            query = query.filter(Paper.research_areas.any(research_area))
+            query = query.filter(Paper.research_areas.ilike(f'%{research_area}%'))
             
         if lab_id:
             query = query.filter(Paper.lab_id == lab_id)
