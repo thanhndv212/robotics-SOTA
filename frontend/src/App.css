@@ -30,6 +30,37 @@
   color: #1890ff;
 }
 
+/* Expandable lab card styles */
+.lab-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.lab-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.lab-card.expanded {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  position: relative;
+}
+
+.lab-card-content {
+  transition: all 0.3s ease;
+}
+
+.paper-item {
+  transition: all 0.2s ease;
+  border-radius: 6px;
+}
+
+.paper-item:hover {
+  background: #e6f7ff !important;
+  transform: translateX(4px);
+}
+
 .filter-panel {
   background: white;
   padding: 16px;

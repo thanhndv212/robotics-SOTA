@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Row, Col, Card, Alert, Input, Select, Pagination, Statistic, Tag, Space, Button, Modal, Checkbox, Divider, Tooltip } from 'antd';
-import { SearchOutlined, GlobalOutlined, ExperimentOutlined, FileTextOutlined, DownloadOutlined, LinkOutlined } from '@ant-design/icons';
+import { Layout, Typography, Row, Col, Card, Alert, Input, Select, Pagination, Statistic, Tag, Space, Button, Modal, Checkbox, Divider, Tooltip, Avatar, List } from 'antd';
+import { SearchOutlined, GlobalOutlined, ExperimentOutlined, FileTextOutlined, DownloadOutlined, LinkOutlined, ExpandAltOutlined, CompressOutlined, CalendarOutlined, TeamOutlined, DollarOutlined } from '@ant-design/icons';
 import './App.css';
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -18,6 +18,9 @@ interface Lab {
   longitude: number;
   focus_areas: string[];
   website?: string;
+  description?: string;
+  established_year?: number;
+  funding_sources?: string[];
   papers?: Paper[];
   paper_count?: number;
 }
@@ -46,6 +49,7 @@ const App: React.FC = () => {
   const [selectedFocus, setSelectedFocus] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLab, setSelectedLab] = useState<Lab | null>(null);
+  const [expandedLabId, setExpandedLabId] = useState<number | null>(null);
   const [scrapeModalVisible, setScrapeModalVisible] = useState(false);
   const [selectedLabsForScraping, setSelectedLabsForScraping] = useState<number[]>([]);
   const [scrapingSources, setScrapingSources] = useState<string[]>(['arxiv']);
@@ -112,6 +116,28 @@ const App: React.FC = () => {
       console.error('Error during scraping:', error);
     } finally {
       setScrapingInProgress(false);
+    }
+  };
+
+  const handleCardClick = (lab: Lab) => {
+    if (expandedLabId === lab.id) {
+      setExpandedLabId(null);
+      setSelectedLab(null);
+    } else {
+      setExpandedLabId(lab.id);
+      setSelectedLab(lab);
+    }
+  };
+
+  const formatAuthors = (authorsString: string) => {
+    try {
+      const authors = JSON.parse(authorsString);
+      if (Array.isArray(authors)) {
+        return authors.slice(0, 3).join(', ') + (authors.length > 3 ? ' et al.' : '');
+      }
+      return authorsString;
+    } catch {
+      return authorsString.split(',').slice(0, 3).join(', ') + (authorsString.split(',').length > 3 ? ' et al.' : '');
     }
   };
 
@@ -309,112 +335,303 @@ const App: React.FC = () => {
                 ) : (
                   <div>
                     <Row gutter={[16, 16]}>
-                      {currentLabs.map((lab) => (
-                        <Col span={8} key={lab.id}>
-                          <Card 
-                            size="small" 
-                            title={
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span>{lab.name.length > 30 ? lab.name.substring(0, 30) + '...' : lab.name}</span>
-                                {lab.paper_count && lab.paper_count > 0 && (
-                                  <Tag color="green">{lab.paper_count} papers</Tag>
-                                )}
-                              </div>
-                            }
-                            style={{ 
-                              height: '400px', 
-                              cursor: 'pointer',
-                              border: selectedLab?.id === lab.id ? '2px solid #1890ff' : undefined
-                            }}
-                            onClick={() => setSelectedLab(lab)}
-                            hoverable
-                          >
-                            <div style={{ height: '340px', overflowY: 'auto' }}>
-                              <p><strong>PI:</strong> {lab.pi}</p>
-                              <p><strong>Institution:</strong> {
-                                lab.institution.length > 25 ? 
-                                lab.institution.substring(0, 25) + '...' : 
-                                lab.institution
-                              }</p>
-                              <p><strong>Location:</strong> {lab.city}, {lab.country}</p>
-                              
-                              {lab.focus_areas && lab.focus_areas.length > 0 && (
-                                <div style={{ marginTop: 8 }}>
-                                  <strong>Focus:</strong>
-                                  <div style={{ marginTop: 4 }}>
-                                    {lab.focus_areas.slice(0, 2).map((area, index) => (
-                                      <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
-                                        {area.length > 12 ? area.substring(0, 12) + '...' : area}
-                                      </Tag>
-                                    ))}
-                                    {lab.focus_areas.length > 2 && (
-                                      <Tag color="default">
-                                        +{lab.focus_areas.length - 2}
-                                      </Tag>
+                      {currentLabs.map((lab) => {
+                        const isExpanded = expandedLabId === lab.id;
+                        return (
+                          <Col span={isExpanded ? 24 : 8} key={lab.id}>
+                            <Card 
+                              size="small" 
+                              className={`lab-card ${isExpanded ? 'expanded' : ''}`}
+                              title={
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Avatar style={{ backgroundColor: '#1890ff' }}>
+                                      {lab.name.charAt(0)}
+                                    </Avatar>
+                                    <span style={{ fontSize: isExpanded ? '18px' : '14px', fontWeight: 'bold' }}>
+                                      {isExpanded ? lab.name : (lab.name.length > 30 ? lab.name.substring(0, 30) + '...' : lab.name)}
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    {lab.paper_count && lab.paper_count > 0 && (
+                                      <Tag color="green">{lab.paper_count} papers</Tag>
                                     )}
+                                    <Button 
+                                      type="text" 
+                                      size="small"
+                                      icon={isExpanded ? <CompressOutlined /> : <ExpandAltOutlined />}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCardClick(lab);
+                                      }}
+                                    />
                                   </div>
                                 </div>
-                              )}
-                              
-                              {lab.papers && lab.papers.length > 0 && (
-                                <div style={{ marginTop: 12 }}>
-                                  <Divider style={{ margin: '8px 0' }}>Recent Papers</Divider>
-                                  {lab.papers.slice(0, 2).map((paper, index) => (
-                                    <div key={index} style={{ marginBottom: 8, padding: 6, background: '#f9f9f9', borderRadius: 4 }}>
-                                      <Tooltip title={paper.title}>
-                                        <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: 2 }}>
-                                          {paper.title.length > 60 ? paper.title.substring(0, 60) + '...' : paper.title}
-                                        </div>
-                                      </Tooltip>
-                                      <div style={{ fontSize: '11px', color: '#666' }}>
-                                        {paper.venue && (
-                                          <span>{paper.venue} • </span>
+                              }
+                              style={{ 
+                                height: isExpanded ? 'auto' : '400px',
+                                cursor: 'pointer',
+                                border: isExpanded ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                                transition: 'all 0.3s ease'
+                              }}
+                              onClick={() => handleCardClick(lab)}
+                              hoverable
+                            >
+                              {isExpanded ? (
+                                // Expanded view
+                                <div>
+                                  <Row gutter={[24, 16]}>
+                                    <Col span={12}>
+                                      <Card title="Lab Information" size="small">
+                                        <Space direction="vertical" style={{ width: '100%' }}>
+                                          <div>
+                                            <strong>Principal Investigator:</strong>
+                                            <div style={{ marginTop: 4 }}>
+                                              <Avatar size="small" style={{ backgroundColor: '#52c41a', marginRight: 8 }}>
+                                                <TeamOutlined />
+                                              </Avatar>
+                                              {lab.pi}
+                                            </div>
+                                          </div>
+                                          
+                                          <div>
+                                            <strong>Institution:</strong>
+                                            <div style={{ marginTop: 4 }}>{lab.institution}</div>
+                                          </div>
+                                          
+                                          <div>
+                                            <strong>Location:</strong>
+                                            <div style={{ marginTop: 4 }}>
+                                              <GlobalOutlined style={{ marginRight: 8 }} />
+                                              {lab.city}, {lab.country}
+                                            </div>
+                                          </div>
+                                          
+                                          {lab.established_year && (
+                                            <div>
+                                              <strong>Established:</strong>
+                                              <div style={{ marginTop: 4 }}>
+                                                <CalendarOutlined style={{ marginRight: 8 }} />
+                                                {lab.established_year}
+                                              </div>
+                                            </div>
+                                          )}
+                                          
+                                          {lab.description && (
+                                            <div>
+                                              <strong>Description:</strong>
+                                              <div style={{ marginTop: 4, padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
+                                                {lab.description}
+                                              </div>
+                                            </div>
+                                          )}
+                                          
+                                          <div style={{ display: 'flex', gap: 8 }}>
+                                            {lab.website && (
+                                              <Button 
+                                                type="primary"
+                                                href={lab.website} 
+                                                target="_blank"
+                                                icon={<LinkOutlined />}
+                                                onClick={(e) => e.stopPropagation()}
+                                              >
+                                                Visit Lab
+                                              </Button>
+                                            )}
+                                          </div>
+                                        </Space>
+                                      </Card>
+                                    </Col>
+                                    
+                                    <Col span={12}>
+                                      <Card title="Research Focus" size="small">
+                                        {lab.focus_areas && lab.focus_areas.length > 0 ? (
+                                          <div>
+                                            {lab.focus_areas.map((area, index) => (
+                                              <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
+                                                {area}
+                                              </Tag>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <div style={{ color: '#999' }}>No focus areas specified</div>
                                         )}
-                                        {paper.publication_date && (
-                                          <span>{new Date(paper.publication_date).getFullYear()}</span>
+                                        
+                                        {lab.funding_sources && lab.funding_sources.length > 0 && (
+                                          <div style={{ marginTop: 16 }}>
+                                            <strong>Funding Sources:</strong>
+                                            <div style={{ marginTop: 8 }}>
+                                              {lab.funding_sources.map((source, index) => (
+                                                <Tag key={index} color="orange" style={{ marginBottom: 4 }}>
+                                                  <DollarOutlined style={{ marginRight: 4 }} />
+                                                  {source}
+                                                </Tag>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </Card>
+                                    </Col>
+                                  </Row>
+                                  
+                                  {lab.papers && lab.papers.length > 0 && (
+                                    <Card title={`Recent Papers (${lab.papers.length})`} style={{ marginTop: 16 }} size="small">
+                                      <List
+                                        itemLayout="vertical"
+                                        dataSource={lab.papers}
+                                        renderItem={(paper, index) => (
+                                          <List.Item
+                                            key={index}
+                                            actions={[
+                                              paper.pdf_url && (
+                                                <Button 
+                                                  type="link" 
+                                                  href={paper.pdf_url}
+                                                  target="_blank"
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  icon={<FileTextOutlined />}
+                                                >
+                                                  PDF
+                                                </Button>
+                                              ),
+                                              paper.arxiv_id && (
+                                                <Button 
+                                                  type="link" 
+                                                  href={`https://arxiv.org/abs/${paper.arxiv_id}`}
+                                                  target="_blank"
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  icon={<LinkOutlined />}
+                                                >
+                                                  ArXiv
+                                                </Button>
+                                              )
+                                            ].filter(Boolean)}
+                                          >
+                                            <List.Item.Meta
+                                              title={
+                                                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                                                  {paper.title}
+                                                </div>
+                                              }
+                                              description={
+                                                <div>
+                                                  <div style={{ marginBottom: 4 }}>
+                                                    <strong>Authors:</strong> {formatAuthors(paper.authors)}
+                                                  </div>
+                                                  {paper.venue && (
+                                                    <div style={{ marginBottom: 4 }}>
+                                                      <strong>Venue:</strong> {paper.venue}
+                                                    </div>
+                                                  )}
+                                                  {paper.publication_date && (
+                                                    <div style={{ marginBottom: 4 }}>
+                                                      <strong>Date:</strong> {new Date(paper.publication_date).toLocaleDateString()}
+                                                    </div>
+                                                  )}
+                                                  {paper.abstract && (
+                                                    <div style={{ marginTop: 8, padding: 8, background: '#f9f9f9', borderRadius: 4 }}>
+                                                      <strong>Abstract:</strong> {paper.abstract.length > 300 ? paper.abstract.substring(0, 300) + '...' : paper.abstract}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              }
+                                            />
+                                          </List.Item>
+                                        )}
+                                      />
+                                    </Card>
+                                  )}
+                                </div>
+                              ) : (
+                                // Collapsed view
+                                <div style={{ height: '340px', overflowY: 'auto' }}>
+                                  <p><strong>PI:</strong> {lab.pi}</p>
+                                  <p><strong>Institution:</strong> {
+                                    lab.institution.length > 25 ? 
+                                    lab.institution.substring(0, 25) + '...' : 
+                                    lab.institution
+                                  }</p>
+                                  <p><strong>Location:</strong> {lab.city}, {lab.country}</p>
+                                  
+                                  {lab.focus_areas && lab.focus_areas.length > 0 && (
+                                    <div style={{ marginTop: 8 }}>
+                                      <strong>Focus:</strong>
+                                      <div style={{ marginTop: 4 }}>
+                                        {lab.focus_areas.slice(0, 2).map((area, index) => (
+                                          <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
+                                            {area.length > 12 ? area.substring(0, 12) + '...' : area}
+                                          </Tag>
+                                        ))}
+                                        {lab.focus_areas.length > 2 && (
+                                          <Tag color="default">
+                                            +{lab.focus_areas.length - 2}
+                                          </Tag>
                                         )}
                                       </div>
-                                      {(paper.pdf_url || paper.arxiv_id) && (
-                                        <Button 
-                                          type="link" 
-                                          size="small"
-                                          href={paper.pdf_url || `https://arxiv.org/abs/${paper.arxiv_id}`}
-                                          target="_blank"
-                                          onClick={(e) => e.stopPropagation()}
-                                          style={{ padding: 0, height: 'auto', fontSize: '11px' }}
-                                        >
-                                          View PDF →
-                                        </Button>
+                                    </div>
+                                  )}
+                                  
+                                  {lab.papers && lab.papers.length > 0 && (
+                                    <div style={{ marginTop: 12 }}>
+                                      <Divider style={{ margin: '8px 0' }}>Recent Papers</Divider>
+                                      {lab.papers.slice(0, 2).map((paper, index) => (
+                                        <div key={index} className="paper-item" style={{ marginBottom: 8, padding: 6, background: '#f9f9f9', borderRadius: 4 }}>
+                                          <Tooltip title={paper.title}>
+                                            <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: 2 }}>
+                                              {paper.title.length > 60 ? paper.title.substring(0, 60) + '...' : paper.title}
+                                            </div>
+                                          </Tooltip>
+                                          <div style={{ fontSize: '11px', color: '#666' }}>
+                                            {paper.venue && (
+                                              <span>{paper.venue} • </span>
+                                            )}
+                                            {paper.publication_date && (
+                                              <span>{new Date(paper.publication_date).getFullYear()}</span>
+                                            )}
+                                          </div>
+                                          {(paper.pdf_url || paper.arxiv_id) && (
+                                            <Button 
+                                              type="link" 
+                                              size="small"
+                                              href={paper.pdf_url || `https://arxiv.org/abs/${paper.arxiv_id}`}
+                                              target="_blank"
+                                              onClick={(e) => e.stopPropagation()}
+                                              style={{ padding: 0, height: 'auto', fontSize: '11px' }}
+                                            >
+                                              View PDF →
+                                            </Button>
+                                          )}
+                                        </div>
+                                      ))}
+                                      {lab.papers.length > 2 && (
+                                        <div style={{ textAlign: 'center', fontSize: '12px', color: '#666' }}>
+                                          +{lab.papers.length - 2} more papers (click to expand)
+                                        </div>
                                       )}
                                     </div>
-                                  ))}
-                                  {lab.papers.length > 2 && (
-                                    <div style={{ textAlign: 'center', fontSize: '12px', color: '#666' }}>
-                                      +{lab.papers.length - 2} more papers
+                                  )}
+                                  
+                                  {lab.website && (
+                                    <div style={{ position: 'absolute', bottom: 8, left: 16, right: 16 }}>
+                                      <Button 
+                                        type="link" 
+                                        size="small"
+                                        href={lab.website} 
+                                        target="_blank"
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{ padding: 0 }}
+                                        icon={<LinkOutlined />}
+                                      >
+                                        Visit Lab
+                                      </Button>
                                     </div>
                                   )}
                                 </div>
                               )}
-                              
-                              {lab.website && (
-                                <div style={{ position: 'absolute', bottom: 8, left: 16, right: 16 }}>
-                                  <Button 
-                                    type="link" 
-                                    size="small"
-                                    href={lab.website} 
-                                    target="_blank"
-                                    onClick={(e) => e.stopPropagation()}
-                                    style={{ padding: 0 }}
-                                    icon={<LinkOutlined />}
-                                  >
-                                    Visit Lab
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </Card>
-                        </Col>
-                      ))}
+                            </Card>
+                          </Col>
+                        );
+                      })}
                     </Row>
                     
                     {filteredLabs.length === 0 && !loading && (
