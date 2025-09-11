@@ -1,0 +1,51 @@
+Lab Name,PI,Institution,City,Country,Focus,Link
+Berkeley Robot Learning Lab (RLL),Pieter Abbeel,UC Berkeley,Berkeley,USA,"Deep RL, imitation learning, sim2real, industrial robot learning",https://rll.berkeley.edu/
+Levine Lab / Robot Learning,Sergey Levine,UC Berkeley,Berkeley,USA,"Foundations of robot learning, end-to-end policies, sim2real, generalist robots",https://people.eecs.berkeley.edu/~svlevine/
+Stanford IRIS (Intelligence through Robotic Interaction at Scale),Chelsea Finn,Stanford University,Stanford,USA,"Large-scale embodied interaction, meta-learning, foundation models for robots",https://iris.stanford.edu/
+MIT Robot Locomotion & Learning,Russ Tedrake,MIT,Cambridge,USA,Learning + control for locomotion and manipulation; sim2real robust control,http://groups.csail.mit.edu/locomotion/
+GRASP / Robot Learning teams,Multiple (e.g. Kostas Daniilidis),University of Pennsylvania,Philadelphia,USA,"Manipulation, perception-to-control learning, dexterous robotics",https://www.grasp.upenn.edu/
+Robot Learning & Interaction Lab,Siddhartha Srinivasa,University of Washington,Seattle,USA,"Manipulation, perception, planning integrated with learning for home robots",http://personalrobotics.cs.washington.edu/
+RobIn Lab (Robot Interactive Intelligence),Roberto Martín-Martín,UT Austin,Austin,USA,"Embodied perception, interactive manipulation, representation learning",https://robin-lab.cs.utexas.edu/
+CMU Robotics Institute — Robot Learning groups,Multiple PIs,Carnegie Mellon University,Pittsburgh,USA,"Dexterous manipulation, learning for autonomy, perception + control",https://www.ri.cmu.edu/
+Northeastern Lab for Learning & Planning in Robotics,Multiple PIs,Northeastern University,Boston,USA,"Learning & planning integration, HRI, real-time learning",https://www.khoury.northeastern.edu/research_areas/robotics/
+Oxford Robotics & AI groups,Multiple PIs,University of Oxford,Oxford,UK,"Embodied AI, sim2real, perception-guided robot learning",https://ori.ox.ac.uk/
+EPFL Learning Algorithms & Systems Lab,Aude Billard,EPFL,Lausanne,Switzerland,"Robot learning for manipulation, HRI, adaptive control",https://www.epfl.ch/labs/las/
+MPI for Intelligent Systems — Robot Learning,Multiple PIs,Max Planck Institute,Tübingen/Stuttgart,Germany,"Manipulation, vision-based control, sim2real",https://www.is.mpg.de/
+ETH Zurich Robotic Systems & Learning,Multiple PIs,ETH Zurich,Zurich,Switzerland,"Robot learning for manipulation, perception, autonomous systems",https://robotics.ethz.ch/
+Imperial College London — Robot Learning & Autonomy,Multiple PIs,Imperial College London,London,UK,"Learning for autonomy, mobile manipulation, robot perception",https://www.imperial.ac.uk/robotics/
+Tsinghua Robot Learning Lab,Multiple PIs,Tsinghua University,Beijing,China,"Large-scale robot learning, manipulation, perception-control integration",https://www.tsinghua.edu.cn/en/
+NTU Centre for Robotics & Intelligent Systems,Multiple PIs,Nanyang Technological University,Singapore,Singapore,"Embodied AI, robot learning for service and industrial robotics",https://www.ntu.edu.sg/
+University of Tokyo — JSK Robotics / Learning groups,Multiple PIs,University of Tokyo,Tokyo,Japan,"Dexterous manipulation, humanoid learning, ML + control",http://www.jsk.t.u-tokyo.ac.jp/
+Seoul National University — Robot Learning groups,Multiple PIs,Seoul National University,Seoul,South Korea,"Robot learning for industrial automation, manipulation, perception",http://en.snu.ac.kr/
+KAIST — Robot Intelligence Lab,Multiple PIs,KAIST,Daejeon,South Korea,"Learning for aerial/legged robots, sim2real, perception-based control",https://robotics.kaist.ac.kr/
+RIKEN AIP — Embodied AI,Multiple PIs,RIKEN,Tokyo,Japan,"AI and robot learning crossovers, foundation models for embodied agents",https://aip.riken.jp/labs/
+Tokyo Institute of Technology — Robot Learning,Multiple PIs,Tokyo Tech,Tokyo,Japan,"Manipulation, control learning, robot perception",https://www.titech.ac.jp/english
+Georgia Tech IRIM / Robotarium,Magnus Egerstedt,Georgia Institute of Technology,Atlanta,USA,"Multi-robot learning, distributed control, Robotarium testbed",https://robotarium.gatech.edu/
+University of Cambridge — Robot Learning & Active Vision,Multiple PIs,University of Cambridge,Cambridge,UK,"Active perception, robot learning for navigation & inspection",https://www.cam.ac.uk/research/robotics
+UIUC Robotics / Robot Learning,Multiple PIs,University of Illinois Urbana-Champaign,Urbana-Champaign,USA,"Robot learning for manipulation, perception, HRI",https://robotics.illinois.edu/
+Human-Robot Empowerment Lab (HRELab),Laura Hallock,University of Utah,Salt Lake City,USA,"Assistive & rehabilitative robotics, personalized robot learning",https://hrelab.utah.edu/
+AUTOLAB (Automation Lab),Ken Goldberg,UC Berkeley,Berkeley,USA,"Robot learning for manipulation, grasping, cloud robotics",https://autolab.berkeley.edu/
+InterACT Lab,Anca Dragan,UC Berkeley,Berkeley,USA,"Human-aware robot learning, safe HRI, intent inference",https://interact.berkeley.edu/
+CMU Robotics & AI (Bagnell Lab),J. Andrew Bagnell,CMU,Pittsburgh,USA,"Imitation learning, perception-for-control, applied autonomy",https://www.cmu.edu/ri/
+Robotics and Perception Group,Davide Scaramuzza,University of Zurich,Zurich,Switzerland,Vision-based learning for aerial robots and agile navigation,http://rpg.ifi.uzh.ch/
+Caltech Robotics & Vision Learning Lab,Pietro Perona (affiliated),Caltech,Pasadena,USA,Visual learning for manipulation and perception-driven policies,https://www.caltech.edu/academics/areas-of-study/robotics
+MIT Distributed Robotics Lab,Daniela Rus,MIT,Cambridge,USA,"Multi-robot learning, distributed control, swarm robotics",https://groups.csail.mit.edu/drl/
+Oxford Robotics Institute,Multiple PIs,University of Oxford,Oxford,UK,Embodied mapping & learning for navigation and long-term autonomy,https://ori.ox.ac.uk/
+Cambridge Robot Learning & Active Vision,Multiple PIs,University of Cambridge,Cambridge,UK,"Active perception, robot learning for navigation",https://www.cam.ac.uk/research/robotics
+Max Planck Institute (MPI-IS Tübingen),Multiple PIs,MPI for Intelligent Systems,Tübingen,Germany,"Learning for manipulation, vision & interaction",https://www.is.mpg.de/
+Imperial Robotics & Learning Lab,Multiple PIs,Imperial College London,London,UK,"Mobile manipulation, embodied learning, perception-driven control",https://www.imperial.ac.uk/robotics/
+EPFL LASA,Aude Billard,EPFL,Lausanne,Switzerland,"Robot learning for manipulation, HRI, adaptive control",https://www.epfl.ch/labs/las/
+University of Tokyo — JSK Robotics,Masayuki Inaba,University of Tokyo,Tokyo,Japan,"Humanoid robotics, dexterous learning, HRI",http://www.jsk.t.u-tokyo.ac.jp/
+KAIST — Biomimetic Robot Lab,Sangbae Kim,KAIST,Daejeon,South Korea,"Legged locomotion, learning-based control, biomimetic robots",https://biomechatronics.kaist.ac.kr/
+SNU Robotics — Robot Learning groups,Multiple PIs,Seoul National University,Seoul,South Korea,"Industrial automation, dexterous manipulation, perception",http://en.snu.ac.kr/
+NTU CRIS,Multiple PIs,Nanyang Technological University,Singapore,Singapore,"Embodied AI, robot learning for industrial/service robotics",https://www.ntu.edu.sg/
+A*STAR I²R Robotics,Multiple PIs,A*STAR,Singapore,Singapore,"Applied robot learning, industrial automation, perception-driven systems",https://www.a-star.edu.sg/i2r
+Tsinghua Robot Intelligence Lab,Multiple PIs,Tsinghua University,Beijing,China,"Robot learning, autonomous manipulation, perception",https://www.tsinghua.edu.cn/en/
+Shanghai Jiao Tong Robot Learning groups,Multiple PIs,SJTU,Shanghai,China,"Dexterous manipulation, sim2real, industrial robotics",https://en.sjtu.edu.cn/
+Peking University — Robotics & Learning,Multiple PIs,Peking University,Beijing,China,"Learning algorithms, perception-control, collaborative robotics",https://english.pku.edu.cn/
+Gwangju Institute of Science and Technology — Robotics,Multiple PIs,GIST,Gwangju,South Korea,"Robot learning for manufacturing, sim2real, autonomy",https://www.gist.ac.kr/
+University of Michigan Robotics — Robot Learning,Multiple PIs,University of Michigan,Ann Arbor,USA,"Legged locomotion, manipulation, learning for autonomy",https://robotics.umich.edu/
+Brown Robotics Lab,Multiple PIs,Brown University,Providence,USA,"Human-robot interaction, robot learning for assistive systems",https://robotics.brown.edu/
+Cornell Robotics & Vision Lab,Multiple PIs,Cornell University,Ithaca,USA,"Perception-driven robot learning, manipulation research",https://www.cornell.edu/research/robotics/
+Harvard Robotics Lab,Multiple PIs,Harvard University,Cambridge,USA,"ML + robotics for soft, medical, and small-scale robots",https://robotics.harvard.edu/
+Florida Institute for Human & Machine Cognition (IHMC),Multiple PIs,IHMC,Pensacola,USA,"Human-machine teaming, robust control + learning for legged/wearable robots",https://www.ihmc.us/

@@ -1,0 +1,55 @@
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-content {
+  padding: 24px;
+  background: #f0f2f5;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.map-container {
+  height: 600px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.stats-card {
+  text-align: center;
+}
+
+.stats-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1890ff;
+}
+
+.filter-panel {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.paper-card {
+  margin-bottom: 16px;
+}
+
+.trend-chart {
+  height: 400px;
+}
+
+.lab-marker {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.lab-marker:hover {
+  transform: scale(1.2);
+}
