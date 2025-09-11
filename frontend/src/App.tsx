@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Row, Col, Card, Alert, Input, Select, Pagination, Statistic, Tag, Space, Button, Modal, Checkbox, Divider, Tooltip, Avatar, List } from 'antd';
-import { SearchOutlined, GlobalOutlined, ExperimentOutlined, FileTextOutlined, DownloadOutlined, LinkOutlined, ExpandAltOutlined, CompressOutlined, CalendarOutlined, TeamOutlined, DollarOutlined } from '@ant-design/icons';
+import { Layout, Typography, Row, Col, Card, Alert, Input, Select, Pagination, Statistic, Tag, Space, Button, Modal, Checkbox, Divider, Tooltip, Avatar, List, Dropdown, Popconfirm, message } from 'antd';
+import { SearchOutlined, GlobalOutlined, ExperimentOutlined, FileTextOutlined, DownloadOutlined, LinkOutlined, ExpandAltOutlined, CompressOutlined, CalendarOutlined, TeamOutlined, DollarOutlined, PlusOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
+import LabFormModal from './components/LabFormModal';
 import './App.css';
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -54,6 +55,9 @@ const App: React.FC = () => {
   const [selectedLabsForScraping, setSelectedLabsForScraping] = useState<number[]>([]);
   const [scrapingSources, setScrapingSources] = useState<string[]>(['arxiv']);
   const [scrapingInProgress, setScrapingInProgress] = useState(false);
+  const [labFormVisible, setLabFormVisible] = useState(false);
+  const [currentLab, setCurrentLab] = useState<Lab | null>(null);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const pageSize = 12;
 
   useEffect(() => {
@@ -119,6 +123,83 @@ const App: React.FC = () => {
     }
   };
 
+  const handleCreateLab = () => {
+    setCurrentLab(null);
+    setFormMode('create');
+    setLabFormVisible(true);
+  };
+
+  const handleEditLab = (lab: Lab) => {
+    setCurrentLab(lab);
+    setFormMode('edit');
+    setLabFormVisible(true);
+  };
+
+  const handleDeleteLab = async (labId: number) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8080/api/labs/${labId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        message.success('Lab deleted successfully!');
+        // Refresh the labs list
+        const labsResponse = await fetch('http://127.0.0.1:8080/api/labs/?include_papers=true');
+        if (labsResponse.ok) {
+          const updatedLabs = await labsResponse.json();
+          setLabs(updatedLabs);
+          setFilteredLabs(updatedLabs);
+        }
+      } else {
+        const error = await response.json();
+        message.error(error.error || 'Delete failed');
+      }
+    } catch (error) {
+      message.error('Network error occurred');
+      console.error('Delete error:', error);
+    }
+  };
+
+  const handleLabFormSuccess = async () => {
+    // Refresh the labs list
+    try {
+      const response = await fetch('http://127.0.0.1:8080/api/labs/?include_papers=true');
+      if (response.ok) {
+        const updatedLabs = await response.json();
+        setLabs(updatedLabs);
+        setFilteredLabs(updatedLabs);
+      }
+    } catch (error) {
+      console.error('Error refreshing labs:', error);
+    }
+    setLabFormVisible(false);
+  };
+
+  const getLabActions = (lab: Lab) => [
+    {
+      key: 'edit',
+      label: 'Edit Lab',
+      icon: <EditOutlined />,
+      onClick: () => handleEditLab(lab),
+    },
+    {
+      key: 'delete',
+      label: 'Delete Lab',
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: () => {
+        Modal.confirm({
+          title: 'Delete Lab',
+          content: `Are you sure you want to delete "${lab.name}"? This action cannot be undone.`,
+          okText: 'Yes, Delete',
+          okType: 'danger',
+          cancelText: 'Cancel',
+          onOk: () => handleDeleteLab(lab.id!),
+        });
+      },
+    },
+  ];
+
   const handleCardClick = (lab: Lab) => {
     if (expandedLabId === lab.id) {
       setExpandedLabId(null);
@@ -180,10 +261,19 @@ const App: React.FC = () => {
 
   return (
     <Layout className="app-layout">
-      <Header style={{ background: '#1890ff', padding: '0 24px' }}>
-        <Title level={2} style={{ color: 'white', margin: 0, lineHeight: '64px' }}>
+            <Header style={{ background: '#001529', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Title level={2} style={{ color: 'white', margin: 0 }}>
           🤖 Robotics Research Trends - State of the Art
         </Title>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleCreateLab}
+          size="large"
+          style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+        >
+          Add New Lab
+        </Button>
       </Header>
       
       <Layout>
@@ -365,6 +455,22 @@ const App: React.FC = () => {
                                         handleCardClick(lab);
                                       }}
                                     />
+                                    <Dropdown
+                                      menu={{ 
+                                        items: getLabActions(lab),
+                                        onClick: ({ domEvent }) => {
+                                          domEvent?.stopPropagation();
+                                        }
+                                      }}
+                                      trigger={['click']}
+                                    >
+                                      <Button 
+                                        type="text" 
+                                        size="small"
+                                        icon={<MoreOutlined />}
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                    </Dropdown>
                                   </div>
                                 </div>
                               }
@@ -717,6 +823,14 @@ const App: React.FC = () => {
           showIcon
         />
       </Modal>
+
+      <LabFormModal
+        visible={labFormVisible}
+        onCancel={() => setLabFormVisible(false)}
+        onSuccess={handleLabFormSuccess}
+        lab={currentLab}
+        mode={formMode}
+      />
     </Layout>
   );
 };

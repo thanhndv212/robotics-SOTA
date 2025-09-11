@@ -69,17 +69,79 @@ def create_lab():
             country=data.get('country'),
             latitude=data.get('latitude'),
             longitude=data.get('longitude'),
-            focus_areas=data.get('focus_areas', []),
             website=data.get('website'),
             description=data.get('description'),
-            established_year=data.get('established_year'),
-            funding_sources=data.get('funding_sources', [])
+            established_year=data.get('established_year')
         )
+        
+        # Set list properties using the property setters
+        lab.focus_areas_list = data.get('focus_areas', [])
+        lab.funding_sources_list = data.get('funding_sources', [])
         
         db.session.add(lab)
         db.session.commit()
         
         return jsonify(lab.to_dict()), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@labs_bp.route('/<int:lab_id>', methods=['PUT'])
+def update_lab(lab_id):
+    """Update an existing lab"""
+    try:
+        lab = Lab.query.get_or_404(lab_id)
+        data = request.get_json()
+        
+        # Update fields if provided
+        if 'name' in data:
+            lab.name = data['name']
+        if 'pi' in data:
+            lab.pi = data['pi']
+        if 'institution' in data:
+            lab.institution = data['institution']
+        if 'city' in data:
+            lab.city = data['city']
+        if 'country' in data:
+            lab.country = data['country']
+        if 'focus_areas' in data:
+            lab.focus_areas_list = data['focus_areas']
+        if 'website' in data:
+            lab.website = data['website']
+        if 'latitude' in data:
+            lab.latitude = data['latitude']
+        if 'longitude' in data:
+            lab.longitude = data['longitude']
+        if 'established_year' in data:
+            lab.established_year = data['established_year']
+        if 'funding_sources' in data:
+            lab.funding_sources_list = data['funding_sources']
+        if 'description' in data:
+            lab.description = data['description']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Lab updated successfully',
+            'lab': lab.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@labs_bp.route('/<int:lab_id>', methods=['DELETE'])
+def delete_lab(lab_id):
+    """Delete a lab"""
+    try:
+        lab = Lab.query.get_or_404(lab_id)
+        db.session.delete(lab)
+        db.session.commit()
+        
+        return jsonify({'message': 'Lab deleted successfully'}), 200
         
     except Exception as e:
         db.session.rollback()
