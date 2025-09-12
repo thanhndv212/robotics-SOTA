@@ -1,6 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Row, Col, Card, Alert, Input, Select, Pagination, Statistic, Tag, Space, Button, Modal, Checkbox, Divider, Tooltip, Avatar, List, Dropdown, Popconfirm, message } from 'antd';
-import { SearchOutlined, GlobalOutlined, ExperimentOutlined, FileTextOutlined, DownloadOutlined, LinkOutlined, ExpandAltOutlined, CompressOutlined, CalendarOutlined, TeamOutlined, DollarOutlined, PlusOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
+import { 
+  Layout, 
+  Card, 
+  Row, 
+  Col, 
+  Space, 
+  Tag, 
+  Avatar,
+  Table,
+  Switch,
+  Button, 
+  Typography, 
+  Statistic, 
+  Divider, 
+  message, 
+  Dropdown,
+  MenuProps,
+  Input,
+  Select,
+  Pagination,
+  Alert,
+  Modal,
+  List,
+  Tooltip,
+  Checkbox
+} from 'antd';
+import { 
+  PushpinOutlined, 
+  GlobalOutlined, 
+  UserOutlined, 
+  EditOutlined, 
+  DeleteOutlined, 
+  EllipsisOutlined,
+  MoreOutlined,
+  ExpandAltOutlined,
+  LinkOutlined,
+  AppstoreOutlined,
+  BarsOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  FileTextOutlined,
+  ExperimentOutlined,
+  DownloadOutlined,
+  CompressOutlined,
+  TeamOutlined,
+  CalendarOutlined,
+  DollarOutlined
+} from '@ant-design/icons';
 import LabFormModal from './components/LabFormModal';
 import './App.css';
 
@@ -58,6 +104,7 @@ const App: React.FC = () => {
   const [labFormVisible, setLabFormVisible] = useState(false);
   const [currentLab, setCurrentLab] = useState<Lab | null>(null);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
   const pageSize = 12;
 
   useEffect(() => {
@@ -197,6 +244,110 @@ const App: React.FC = () => {
           onOk: () => handleDeleteLab(lab.id!),
         });
       },
+    },
+  ];
+
+  const tableColumns = [
+    {
+      title: 'Lab',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text: string, record: Lab) => (
+        <Space>
+          <Avatar style={{ backgroundColor: '#1890ff' }}>
+            {text.charAt(0)}
+          </Avatar>
+          <div>
+            <div style={{ fontWeight: 'bold' }}>{text}</div>
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              {record.institution}
+            </div>
+          </div>
+        </Space>
+      ),
+      sorter: (a: Lab, b: Lab) => a.name.localeCompare(b.name),
+    },
+    {
+      title: 'PI',
+      dataIndex: 'pi',
+      key: 'pi',
+      sorter: (a: Lab, b: Lab) => (a.pi || '').localeCompare(b.pi || ''),
+    },
+    {
+      title: 'Location',
+      key: 'location',
+      render: (record: Lab) => `${record.city}, ${record.country}`,
+      sorter: (a: Lab, b: Lab) => `${a.city}, ${a.country}`.localeCompare(`${b.city}, ${b.country}`),
+    },
+    {
+      title: 'Focus Areas',
+      dataIndex: 'focus_areas',
+      key: 'focus_areas',
+      render: (areas: string[]) => (
+        <div>
+          {areas && areas.slice(0, 2).map((area, index) => (
+            <Tag key={index} color="geekblue" style={{ marginBottom: 2 }}>
+              {area.length > 15 ? area.substring(0, 15) + '...' : area}
+            </Tag>
+          ))}
+          {areas && areas.length > 2 && (
+            <Tag color="default">+{areas.length - 2}</Tag>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: 'Papers',
+      dataIndex: 'paper_count',
+      key: 'paper_count',
+      render: (count: number) => (
+        <div style={{ textAlign: 'center' }}>
+          {count > 0 ? (
+            <Tag color="green">{count} papers</Tag>
+          ) : (
+            <Tag color="default">No papers</Tag>
+          )}
+        </div>
+      ),
+      sorter: (a: Lab, b: Lab) => (a.paper_count || 0) - (b.paper_count || 0),
+    },
+    {
+      title: 'Website',
+      dataIndex: 'website',
+      key: 'website',
+      render: (website: string) => 
+        website ? (
+          <Button 
+            type="link" 
+            size="small"
+            href={website} 
+            target="_blank"
+            icon={<LinkOutlined />}
+          >
+            Visit
+          </Button>
+        ) : null,
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (record: Lab) => (
+        <Dropdown
+          menu={{ 
+            items: getLabActions(record),
+            onClick: ({ domEvent }) => {
+              domEvent?.stopPropagation();
+            }
+          }}
+          trigger={['click']}
+        >
+          <Button 
+            type="text" 
+            size="small"
+            icon={<MoreOutlined />}
+          />
+        </Dropdown>
+      ),
     },
   ];
 
@@ -407,338 +558,543 @@ const App: React.FC = () => {
                 title={`Research Labs (${filteredLabs.length} results)`} 
                 loading={loading}
                 extra={
-                  <Pagination
-                    current={currentPage}
-                    total={filteredLabs.length}
-                    pageSize={pageSize}
-                    onChange={setCurrentPage}
-                    showSizeChanger={false}
-                    showQuickJumper
-                    showTotal={(total, range) => 
-                      `${range[0]}-${range[1]} of ${total} labs`
-                    }
-                  />
+                  <Space size="large">
+                    <Space>
+                      <AppstoreOutlined />
+                      <Switch
+                        checked={viewMode === 'list'}
+                        onChange={(checked) => setViewMode(checked ? 'list' : 'cards')}
+                        checkedChildren="List"
+                        unCheckedChildren="Cards"
+                      />
+                      <BarsOutlined />
+                    </Space>
+                    <Pagination
+                      current={currentPage}
+                      total={filteredLabs.length}
+                      pageSize={pageSize}
+                      onChange={setCurrentPage}
+                      showSizeChanger={false}
+                      showQuickJumper
+                      showTotal={(total, range) => 
+                        `${range[0]}-${range[1]} of ${total} labs`
+                      }
+                    />
+                  </Space>
                 }
               >
                 {error ? (
                   <Alert message={error} type="error" />
                 ) : (
                   <div>
-                    <Row gutter={[16, 16]}>
-                      {currentLabs.map((lab) => {
-                        const isExpanded = expandedLabId === lab.id;
-                        return (
-                          <Col span={isExpanded ? 24 : 8} key={lab.id}>
-                            <Card 
-                              size="small" 
-                              className={`lab-card ${isExpanded ? 'expanded' : ''}`}
-                              title={
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <Avatar style={{ backgroundColor: '#1890ff' }}>
-                                      {lab.name.charAt(0)}
-                                    </Avatar>
-                                    <span style={{ fontSize: isExpanded ? '18px' : '14px', fontWeight: 'bold' }}>
-                                      {isExpanded ? lab.name : (lab.name.length > 30 ? lab.name.substring(0, 30) + '...' : lab.name)}
-                                    </span>
-                                  </div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    {lab.paper_count && lab.paper_count > 0 && (
-                                      <Tag color="green">{lab.paper_count} papers</Tag>
-                                    )}
-                                    <Button 
-                                      type="text" 
-                                      size="small"
-                                      icon={isExpanded ? <CompressOutlined /> : <ExpandAltOutlined />}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleCardClick(lab);
-                                      }}
-                                    />
-                                    <Dropdown
-                                      menu={{ 
-                                        items: getLabActions(lab),
-                                        onClick: ({ domEvent }) => {
-                                          domEvent?.stopPropagation();
-                                        }
-                                      }}
-                                      trigger={['click']}
-                                    >
+                    {viewMode === 'cards' ? (
+                      // Card View
+                      <Row gutter={[16, 16]}>
+                        {currentLabs.map((lab) => {
+                          const isExpanded = expandedLabId === lab.id;
+                          return (
+                            <Col span={isExpanded ? 24 : 8} key={lab.id}>
+                              <Card 
+                                size="small" 
+                                className={`lab-card ${isExpanded ? 'expanded' : ''}`}
+                                title={
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                      <Avatar style={{ backgroundColor: '#1890ff' }}>
+                                        {lab.name.charAt(0)}
+                                      </Avatar>
+                                      <span style={{ fontSize: isExpanded ? '18px' : '14px', fontWeight: 'bold' }}>
+                                        {isExpanded ? lab.name : (lab.name.length > 30 ? lab.name.substring(0, 30) + '...' : lab.name)}
+                                      </span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                      {lab.paper_count && lab.paper_count > 0 && (
+                                        <Tag color="green">{lab.paper_count} papers</Tag>
+                                      )}
                                       <Button 
                                         type="text" 
                                         size="small"
-                                        icon={<MoreOutlined />}
-                                        onClick={(e) => e.stopPropagation()}
+                                        icon={isExpanded ? <CompressOutlined /> : <ExpandAltOutlined />}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCardClick(lab);
+                                        }}
                                       />
-                                    </Dropdown>
+                                      <Dropdown
+                                        menu={{ 
+                                          items: getLabActions(lab),
+                                          onClick: ({ domEvent }) => {
+                                            domEvent?.stopPropagation();
+                                          }
+                                        }}
+                                        trigger={['click']}
+                                      >
+                                        <Button 
+                                          type="text" 
+                                          size="small"
+                                          icon={<MoreOutlined />}
+                                          onClick={(e) => e.stopPropagation()}
+                                        />
+                                      </Dropdown>
+                                    </div>
                                   </div>
-                                </div>
-                              }
-                              style={{ 
-                                height: isExpanded ? 'auto' : '400px',
-                                cursor: 'pointer',
-                                border: isExpanded ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                                transition: 'all 0.3s ease'
-                              }}
-                              onClick={() => handleCardClick(lab)}
-                              hoverable
-                            >
-                              {isExpanded ? (
-                                // Expanded view
-                                <div>
-                                  <Row gutter={[24, 16]}>
-                                    <Col span={12}>
-                                      <Card title="Lab Information" size="small">
-                                        <Space direction="vertical" style={{ width: '100%' }}>
-                                          <div>
-                                            <strong>Principal Investigator:</strong>
-                                            <div style={{ marginTop: 4 }}>
-                                              <Avatar size="small" style={{ backgroundColor: '#52c41a', marginRight: 8 }}>
-                                                <TeamOutlined />
-                                              </Avatar>
-                                              {lab.pi}
-                                            </div>
-                                          </div>
-                                          
-                                          <div>
-                                            <strong>Institution:</strong>
-                                            <div style={{ marginTop: 4 }}>{lab.institution}</div>
-                                          </div>
-                                          
-                                          <div>
-                                            <strong>Location:</strong>
-                                            <div style={{ marginTop: 4 }}>
-                                              <GlobalOutlined style={{ marginRight: 8 }} />
-                                              {lab.city}, {lab.country}
-                                            </div>
-                                          </div>
-                                          
-                                          {lab.established_year && (
+                                }
+                                style={{ 
+                                  height: isExpanded ? 'auto' : '400px',
+                                  cursor: 'pointer',
+                                  border: isExpanded ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                                  transition: 'all 0.3s ease'
+                                }}
+                                onClick={() => handleCardClick(lab)}
+                                hoverable
+                              >
+                                {isExpanded ? (
+                                  // Expanded view
+                                  <div>
+                                    <Row gutter={[24, 16]}>
+                                      <Col span={12}>
+                                        <Card title="Lab Information" size="small">
+                                          <Space direction="vertical" style={{ width: '100%' }}>
                                             <div>
-                                              <strong>Established:</strong>
+                                              <strong>Principal Investigator:</strong>
                                               <div style={{ marginTop: 4 }}>
-                                                <CalendarOutlined style={{ marginRight: 8 }} />
-                                                {lab.established_year}
+                                                <Avatar size="small" style={{ backgroundColor: '#52c41a', marginRight: 8 }}>
+                                                  <TeamOutlined />
+                                                </Avatar>
+                                                {lab.pi}
                                               </div>
                                             </div>
-                                          )}
-                                          
-                                          {lab.description && (
+                                            
                                             <div>
-                                              <strong>Description:</strong>
-                                              <div style={{ marginTop: 4, padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
-                                                {lab.description}
+                                              <strong>Institution:</strong>
+                                              <div style={{ marginTop: 4 }}>{lab.institution}</div>
+                                            </div>
+                                            
+                                            <div>
+                                              <strong>Location:</strong>
+                                              <div style={{ marginTop: 4 }}>
+                                                <GlobalOutlined style={{ marginRight: 8 }} />
+                                                {lab.city}, {lab.country}
                                               </div>
                                             </div>
-                                          )}
-                                          
-                                          <div style={{ display: 'flex', gap: 8 }}>
-                                            {lab.website && (
-                                              <Button 
-                                                type="primary"
-                                                href={lab.website} 
-                                                target="_blank"
-                                                icon={<LinkOutlined />}
-                                                onClick={(e) => e.stopPropagation()}
-                                              >
-                                                Visit Lab
-                                              </Button>
+                                            
+                                            {lab.established_year && (
+                                              <div>
+                                                <strong>Established:</strong>
+                                                <div style={{ marginTop: 4 }}>
+                                                  <CalendarOutlined style={{ marginRight: 8 }} />
+                                                  {lab.established_year}
+                                                </div>
+                                              </div>
                                             )}
-                                          </div>
-                                        </Space>
-                                      </Card>
-                                    </Col>
-                                    
-                                    <Col span={12}>
-                                      <Card title="Research Focus" size="small">
-                                        {lab.focus_areas && lab.focus_areas.length > 0 ? (
-                                          <div>
-                                            {lab.focus_areas.map((area, index) => (
-                                              <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
-                                                {area}
-                                              </Tag>
-                                            ))}
-                                          </div>
-                                        ) : (
-                                          <div style={{ color: '#999' }}>No focus areas specified</div>
-                                        )}
-                                        
-                                        {lab.funding_sources && lab.funding_sources.length > 0 && (
-                                          <div style={{ marginTop: 16 }}>
-                                            <strong>Funding Sources:</strong>
-                                            <div style={{ marginTop: 8 }}>
-                                              {lab.funding_sources.map((source, index) => (
-                                                <Tag key={index} color="orange" style={{ marginBottom: 4 }}>
-                                                  <DollarOutlined style={{ marginRight: 4 }} />
-                                                  {source}
+                                            
+                                            {lab.description && (
+                                              <div>
+                                                <strong>Description:</strong>
+                                                <div style={{ marginTop: 4, padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
+                                                  {lab.description}
+                                                </div>
+                                              </div>
+                                            )}
+                                            
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                              {lab.website && (
+                                                <Button 
+                                                  type="primary"
+                                                  href={lab.website} 
+                                                  target="_blank"
+                                                  icon={<LinkOutlined />}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                >
+                                                  Visit Lab
+                                                </Button>
+                                              )}
+                                            </div>
+                                          </Space>
+                                        </Card>
+                                      </Col>
+                                      
+                                      <Col span={12}>
+                                        <Card title="Research Focus" size="small">
+                                          {lab.focus_areas && lab.focus_areas.length > 0 ? (
+                                            <div>
+                                              {lab.focus_areas.map((area, index) => (
+                                                <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
+                                                  {area}
                                                 </Tag>
                                               ))}
                                             </div>
-                                          </div>
-                                        )}
-                                      </Card>
-                                    </Col>
-                                  </Row>
-                                  
-                                  {lab.papers && lab.papers.length > 0 && (
-                                    <Card title={`Recent Papers (${lab.papers.length})`} style={{ marginTop: 16 }} size="small">
-                                      <List
-                                        itemLayout="vertical"
-                                        dataSource={lab.papers}
-                                        renderItem={(paper, index) => (
-                                          <List.Item
-                                            key={index}
-                                            actions={[
-                                              paper.pdf_url && (
-                                                <Button 
-                                                  type="link" 
-                                                  href={paper.pdf_url}
-                                                  target="_blank"
-                                                  onClick={(e) => e.stopPropagation()}
-                                                  icon={<FileTextOutlined />}
-                                                >
-                                                  PDF
-                                                </Button>
-                                              ),
-                                              paper.arxiv_id && (
-                                                <Button 
-                                                  type="link" 
-                                                  href={`https://arxiv.org/abs/${paper.arxiv_id}`}
-                                                  target="_blank"
-                                                  onClick={(e) => e.stopPropagation()}
-                                                  icon={<LinkOutlined />}
-                                                >
-                                                  ArXiv
-                                                </Button>
-                                              )
-                                            ].filter(Boolean)}
-                                          >
-                                            <List.Item.Meta
-                                              title={
-                                                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
-                                                  {paper.title}
-                                                </div>
-                                              }
-                                              description={
-                                                <div>
-                                                  <div style={{ marginBottom: 4 }}>
-                                                    <strong>Authors:</strong> {formatAuthors(paper.authors)}
-                                                  </div>
-                                                  {paper.venue && (
-                                                    <div style={{ marginBottom: 4 }}>
-                                                      <strong>Venue:</strong> {paper.venue}
-                                                    </div>
-                                                  )}
-                                                  {paper.publication_date && (
-                                                    <div style={{ marginBottom: 4 }}>
-                                                      <strong>Date:</strong> {new Date(paper.publication_date).toLocaleDateString()}
-                                                    </div>
-                                                  )}
-                                                  {paper.abstract && (
-                                                    <div style={{ marginTop: 8, padding: 8, background: '#f9f9f9', borderRadius: 4 }}>
-                                                      <strong>Abstract:</strong> {paper.abstract.length > 300 ? paper.abstract.substring(0, 300) + '...' : paper.abstract}
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              }
-                                            />
-                                          </List.Item>
-                                        )}
-                                      />
-                                    </Card>
-                                  )}
-                                </div>
-                              ) : (
-                                // Collapsed view
-                                <div style={{ height: '340px', overflowY: 'auto' }}>
-                                  <p><strong>PI:</strong> {lab.pi}</p>
-                                  <p><strong>Institution:</strong> {
-                                    lab.institution.length > 25 ? 
-                                    lab.institution.substring(0, 25) + '...' : 
-                                    lab.institution
-                                  }</p>
-                                  <p><strong>Location:</strong> {lab.city}, {lab.country}</p>
-                                  
-                                  {lab.focus_areas && lab.focus_areas.length > 0 && (
-                                    <div style={{ marginTop: 8 }}>
-                                      <strong>Focus:</strong>
-                                      <div style={{ marginTop: 4 }}>
-                                        {lab.focus_areas.slice(0, 2).map((area, index) => (
-                                          <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
-                                            {area.length > 12 ? area.substring(0, 12) + '...' : area}
-                                          </Tag>
-                                        ))}
-                                        {lab.focus_areas.length > 2 && (
-                                          <Tag color="default">
-                                            +{lab.focus_areas.length - 2}
-                                          </Tag>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                                  
-                                  {lab.papers && lab.papers.length > 0 && (
-                                    <div style={{ marginTop: 12 }}>
-                                      <Divider style={{ margin: '8px 0' }}>Recent Papers</Divider>
-                                      {lab.papers.slice(0, 2).map((paper, index) => (
-                                        <div key={index} className="paper-item" style={{ marginBottom: 8, padding: 6, background: '#f9f9f9', borderRadius: 4 }}>
-                                          <Tooltip title={paper.title}>
-                                            <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: 2 }}>
-                                              {paper.title.length > 60 ? paper.title.substring(0, 60) + '...' : paper.title}
+                                          ) : (
+                                            <div style={{ color: '#999' }}>No focus areas specified</div>
+                                          )}
+                                          
+                                          {lab.funding_sources && lab.funding_sources.length > 0 && (
+                                            <div style={{ marginTop: 16 }}>
+                                              <strong>Funding Sources:</strong>
+                                              <div style={{ marginTop: 8 }}>
+                                                {lab.funding_sources.map((source, index) => (
+                                                  <Tag key={index} color="orange" style={{ marginBottom: 4 }}>
+                                                    <DollarOutlined style={{ marginRight: 4 }} />
+                                                    {source}
+                                                  </Tag>
+                                                ))}
+                                              </div>
                                             </div>
-                                          </Tooltip>
-                                          <div style={{ fontSize: '11px', color: '#666' }}>
-                                            {paper.venue && (
-                                              <span>{paper.venue} • </span>
-                                            )}
-                                            {paper.publication_date && (
-                                              <span>{new Date(paper.publication_date).getFullYear()}</span>
-                                            )}
-                                          </div>
-                                          {(paper.pdf_url || paper.arxiv_id) && (
-                                            <Button 
-                                              type="link" 
-                                              size="small"
-                                              href={paper.pdf_url || `https://arxiv.org/abs/${paper.arxiv_id}`}
-                                              target="_blank"
-                                              onClick={(e) => e.stopPropagation()}
-                                              style={{ padding: 0, height: 'auto', fontSize: '11px' }}
+                                          )}
+                                        </Card>
+                                      </Col>
+                                    </Row>
+                                    
+                                    {lab.papers && lab.papers.length > 0 && (
+                                      <Card title={`Recent Papers (${lab.papers.length})`} style={{ marginTop: 16 }} size="small">
+                                        <List
+                                          itemLayout="vertical"
+                                          dataSource={lab.papers}
+                                          renderItem={(paper, index) => (
+                                            <List.Item
+                                              key={index}
+                                              actions={[
+                                                paper.pdf_url && (
+                                                  <Button 
+                                                    type="link" 
+                                                    href={paper.pdf_url}
+                                                    target="_blank"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    icon={<FileTextOutlined />}
+                                                  >
+                                                    PDF
+                                                  </Button>
+                                                ),
+                                                paper.arxiv_id && (
+                                                  <Button 
+                                                    type="link" 
+                                                    href={`https://arxiv.org/abs/${paper.arxiv_id}`}
+                                                    target="_blank"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    icon={<LinkOutlined />}
+                                                  >
+                                                    ArXiv
+                                                  </Button>
+                                                )
+                                              ].filter(Boolean)}
                                             >
-                                              View PDF →
-                                            </Button>
+                                              <List.Item.Meta
+                                                title={
+                                                  <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                                                    {paper.title}
+                                                  </div>
+                                                }
+                                                description={
+                                                  <div>
+                                                    <div style={{ marginBottom: 4 }}>
+                                                      <strong>Authors:</strong> {formatAuthors(paper.authors)}
+                                                    </div>
+                                                    {paper.venue && (
+                                                      <div style={{ marginBottom: 4 }}>
+                                                        <strong>Venue:</strong> {paper.venue}
+                                                      </div>
+                                                    )}
+                                                    {paper.publication_date && (
+                                                      <div style={{ marginBottom: 4 }}>
+                                                        <strong>Date:</strong> {new Date(paper.publication_date).toLocaleDateString()}
+                                                      </div>
+                                                    )}
+                                                    {paper.abstract && (
+                                                      <div style={{ marginTop: 8, padding: 8, background: '#f9f9f9', borderRadius: 4 }}>
+                                                        <strong>Abstract:</strong> {paper.abstract.length > 300 ? paper.abstract.substring(0, 300) + '...' : paper.abstract}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                }
+                                              />
+                                            </List.Item>
+                                          )}
+                                        />
+                                      </Card>
+                                    )}
+                                  </div>
+                                ) : (
+                                  // Collapsed view
+                                  <div style={{ height: '340px', overflowY: 'auto' }}>
+                                    <p><strong>PI:</strong> {lab.pi}</p>
+                                    <p><strong>Institution:</strong> {
+                                      lab.institution.length > 25 ? 
+                                      lab.institution.substring(0, 25) + '...' : 
+                                      lab.institution
+                                    }</p>
+                                    <p><strong>Location:</strong> {lab.city}, {lab.country}</p>
+                                    
+                                    {lab.focus_areas && lab.focus_areas.length > 0 && (
+                                      <div style={{ marginTop: 8 }}>
+                                        <strong>Focus:</strong>
+                                        <div style={{ marginTop: 4 }}>
+                                          {lab.focus_areas.slice(0, 2).map((area, index) => (
+                                            <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
+                                              {area.length > 12 ? area.substring(0, 12) + '...' : area}
+                                            </Tag>
+                                          ))}
+                                          {lab.focus_areas.length > 2 && (
+                                            <Tag color="default">
+                                              +{lab.focus_areas.length - 2}
+                                            </Tag>
                                           )}
                                         </div>
-                                      ))}
-                                      {lab.papers.length > 2 && (
-                                        <div style={{ textAlign: 'center', fontSize: '12px', color: '#666' }}>
-                                          +{lab.papers.length - 2} more papers (click to expand)
+                                      </div>
+                                    )}
+                                    
+                                    {lab.papers && lab.papers.length > 0 && (
+                                      <div style={{ marginTop: 12 }}>
+                                        <Divider style={{ margin: '8px 0' }}>Recent Papers</Divider>
+                                        {lab.papers.slice(0, 2).map((paper, index) => (
+                                          <div key={index} className="paper-item" style={{ marginBottom: 8, padding: 6, background: '#f9f9f9', borderRadius: 4 }}>
+                                            <Tooltip title={paper.title}>
+                                              <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: 2 }}>
+                                                {paper.title.length > 60 ? paper.title.substring(0, 60) + '...' : paper.title}
+                                              </div>
+                                            </Tooltip>
+                                            <div style={{ fontSize: '11px', color: '#666' }}>
+                                              {paper.venue && (
+                                                <span>{paper.venue} • </span>
+                                              )}
+                                              {paper.publication_date && (
+                                                <span>{new Date(paper.publication_date).getFullYear()}</span>
+                                              )}
+                                            </div>
+                                            {(paper.pdf_url || paper.arxiv_id) && (
+                                              <Button 
+                                                type="link" 
+                                                size="small"
+                                                href={paper.pdf_url || `https://arxiv.org/abs/${paper.arxiv_id}`}
+                                                target="_blank"
+                                                onClick={(e) => e.stopPropagation()}
+                                                style={{ padding: 0, height: 'auto', fontSize: '11px' }}
+                                              >
+                                                View PDF →
+                                              </Button>
+                                            )}
+                                          </div>
+                                        ))}
+                                        {lab.papers.length > 2 && (
+                                          <div style={{ textAlign: 'center', fontSize: '12px', color: '#666' }}>
+                                            +{lab.papers.length - 2} more papers (click to expand)
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {lab.website && (
+                                      <div style={{ position: 'absolute', bottom: 8, left: 16, right: 16 }}>
+                                        <Button 
+                                          type="link" 
+                                          size="small"
+                                          href={lab.website} 
+                                          target="_blank"
+                                          onClick={(e) => e.stopPropagation()}
+                                          style={{ padding: 0 }}
+                                          icon={<LinkOutlined />}
+                                        >
+                                          Visit Lab
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </Card>
+                            </Col>
+                          );
+                        })}
+                      </Row>
+                    ) : (
+                      // List View
+                      <Table
+                        columns={tableColumns}
+                        dataSource={currentLabs}
+                        pagination={false}
+                        rowKey="id"
+                        size="middle"
+                        scroll={{ x: 1200 }}
+                        expandable={{
+                          expandedRowKeys: expandedLabId ? [expandedLabId] : [],
+                          onExpand: (expanded, record) => {
+                            setExpandedLabId(expanded ? record.id : null);
+                          },
+                          expandedRowRender: (record) => (
+                            <div style={{ padding: '16px', backgroundColor: '#fafafa' }}>
+                              <Row gutter={[24, 16]}>
+                                <Col span={12}>
+                                  <Card title="Lab Information" size="small">
+                                    <Space direction="vertical" style={{ width: '100%' }}>
+                                      <div>
+                                        <strong>Principal Investigator:</strong>
+                                        <div style={{ marginTop: 4 }}>
+                                          <Avatar size="small" style={{ backgroundColor: '#52c41a', marginRight: 8 }}>
+                                            <TeamOutlined />
+                                          </Avatar>
+                                          {record.pi}
+                                        </div>
+                                      </div>
+                                      
+                                      <div>
+                                        <strong>Institution:</strong>
+                                        <div style={{ marginTop: 4 }}>{record.institution}</div>
+                                      </div>
+                                      
+                                      <div>
+                                        <strong>Location:</strong>
+                                        <div style={{ marginTop: 4 }}>
+                                          <GlobalOutlined style={{ marginRight: 8 }} />
+                                          {record.city}, {record.country}
+                                        </div>
+                                      </div>
+                                      
+                                      {record.established_year && (
+                                        <div>
+                                          <strong>Established:</strong>
+                                          <div style={{ marginTop: 4 }}>
+                                            <CalendarOutlined style={{ marginRight: 8 }} />
+                                            {record.established_year}
+                                          </div>
                                         </div>
                                       )}
-                                    </div>
-                                  )}
-                                  
-                                  {lab.website && (
-                                    <div style={{ position: 'absolute', bottom: 8, left: 16, right: 16 }}>
-                                      <Button 
-                                        type="link" 
-                                        size="small"
-                                        href={lab.website} 
-                                        target="_blank"
-                                        onClick={(e) => e.stopPropagation()}
-                                        style={{ padding: 0 }}
-                                        icon={<LinkOutlined />}
+                                      
+                                      {record.description && (
+                                        <div>
+                                          <strong>Description:</strong>
+                                          <div style={{ marginTop: 4, padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
+                                            {record.description}
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      <div style={{ display: 'flex', gap: 8 }}>
+                                        {record.website && (
+                                          <Button 
+                                            type="primary"
+                                            href={record.website} 
+                                            target="_blank"
+                                            icon={<LinkOutlined />}
+                                          >
+                                            Visit Lab
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </Space>
+                                  </Card>
+                                </Col>
+                                
+                                <Col span={12}>
+                                  <Card title="Research Focus" size="small">
+                                    {record.focus_areas && record.focus_areas.length > 0 ? (
+                                      <div>
+                                        {record.focus_areas.map((area, index) => (
+                                          <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
+                                            {area}
+                                          </Tag>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div style={{ color: '#999' }}>No focus areas specified</div>
+                                    )}
+                                    
+                                    {record.funding_sources && record.funding_sources.length > 0 && (
+                                      <div style={{ marginTop: 16 }}>
+                                        <strong>Funding Sources:</strong>
+                                        <div style={{ marginTop: 8 }}>
+                                          {record.funding_sources.map((source, index) => (
+                                            <Tag key={index} color="orange" style={{ marginBottom: 4 }}>
+                                              <DollarOutlined style={{ marginRight: 4 }} />
+                                              {source}
+                                            </Tag>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </Card>
+                                </Col>
+                              </Row>
+                              
+                              {record.papers && record.papers.length > 0 && (
+                                <Card title={`Recent Papers (${record.papers.length})`} style={{ marginTop: 16 }} size="small">
+                                  <List
+                                    itemLayout="vertical"
+                                    dataSource={record.papers}
+                                    renderItem={(paper, index) => (
+                                      <List.Item
+                                        key={index}
+                                        actions={[
+                                          paper.pdf_url && (
+                                            <Button 
+                                              type="link" 
+                                              href={paper.pdf_url}
+                                              target="_blank"
+                                              icon={<FileTextOutlined />}
+                                            >
+                                              PDF
+                                            </Button>
+                                          ),
+                                          paper.arxiv_id && (
+                                            <Button 
+                                              type="link" 
+                                              href={`https://arxiv.org/abs/${paper.arxiv_id}`}
+                                              target="_blank"
+                                              icon={<LinkOutlined />}
+                                            >
+                                              ArXiv
+                                            </Button>
+                                          )
+                                        ].filter(Boolean)}
                                       >
-                                        Visit Lab
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
+                                        <List.Item.Meta
+                                          title={
+                                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                                              {paper.title}
+                                            </div>
+                                          }
+                                          description={
+                                            <div>
+                                              <div style={{ marginBottom: 4 }}>
+                                                <strong>Authors:</strong> {formatAuthors(paper.authors)}
+                                              </div>
+                                              {paper.venue && (
+                                                <div style={{ marginBottom: 4 }}>
+                                                  <strong>Venue:</strong> {paper.venue}
+                                                </div>
+                                              )}
+                                              {paper.publication_date && (
+                                                <div style={{ marginBottom: 4 }}>
+                                                  <strong>Date:</strong> {new Date(paper.publication_date).toLocaleDateString()}
+                                                </div>
+                                              )}
+                                              {paper.abstract && (
+                                                <div style={{ marginTop: 8, padding: 8, background: '#f9f9f9', borderRadius: 4 }}>
+                                                  <strong>Abstract:</strong> {paper.abstract.length > 300 ? paper.abstract.substring(0, 300) + '...' : paper.abstract}
+                                                </div>
+                                              )}
+                                            </div>
+                                          }
+                                        />
+                                      </List.Item>
+                                    )}
+                                  />
+                                </Card>
                               )}
-                            </Card>
-                          </Col>
-                        );
-                      })}
-                    </Row>
+                            </div>
+                          ),
+                          expandIcon: ({ expanded, onExpand, record }) => (
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={expanded ? <CompressOutlined /> : <ExpandAltOutlined />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onExpand(record, e);
+                              }}
+                              title={expanded ? "Collapse" : "Expand Details"}
+                            />
+                          ),
+                        }}
+                      />
+                    )}
                     
                     {filteredLabs.length === 0 && !loading && (
                       <div style={{ textAlign: 'center', padding: '40px' }}>
