@@ -5,6 +5,9 @@ A comprehensive full-stack system for mapping and analyzing global robotics rese
 ## 🚀 Features
 
 - **Interactive Geographic Map**: Visualize 47+ robotics labs worldwide with Mapbox integration
+- **Hierarchical Lab Organization**: Multi-level lab structure with departments and research groups
+- **Institution Grouping**: Group and organize labs by institution for better navigation
+- **Research Group Management**: Create and manage specific research groups within larger institutions
 - **Real-time Database**: SQLite/PostgreSQL with comprehensive lab, paper, and researcher data
 - **REST API**: Complete backend API for labs, papers, trends, and statistics
 - **Advanced Search**: Multi-dimensional filtering by location, research focus, and institution
@@ -53,6 +56,35 @@ robotics-SOTA/
 - **Global Coverage**: 12+ countries across North America, Europe, and Asia
 
 **Research Focus Areas**: Deep RL, manipulation, perception, sim2real, human-robot interaction, legged locomotion, autonomous systems, industrial robotics
+
+## 🏛️ Lab Organization System
+
+### Hierarchical Structure
+The system supports multi-level lab organization to handle complex institutional structures:
+
+- **Independent Labs**: Single research groups with individual PIs
+- **Department Labs**: Parent institutions containing multiple research groups
+- **Research Groups**: Specific sub-groups within larger institutions
+
+### Features
+- **Hierarchy Toggle**: Switch between flat view (all labs) and hierarchical view (departments → groups)
+- **Institution Grouping**: Group labs by institution to see research concentration
+- **Research Group Management**: Create, edit, and manage research groups within departments
+- **Flexible Display**: Choose between card view and list view for different data densities
+
+### Example Structure
+```
+Carnegie Mellon University (Department)
+├── Robot Learning Lab (PI: Deepak Pathak)
+├── Manipulation Lab (PI: Matthew Mason)
+└── Field Robotics Center (PI: Red Whittaker)
+
+MIT (Department)
+├── Computer Science and Artificial Intelligence Laboratory
+└── Distributed Robotics Laboratory
+```
+
+This solves the "multiple PIs" problem by organizing large institutions into specific research groups with individual PIs and focus areas.
 
 ## 🚀 Quick Start
 
@@ -107,12 +139,34 @@ npm start           # Start development server
 - **Backend API**: http://127.0.0.1:8080
 - **Lab Data**: http://127.0.0.1:8080/api/labs
 
+## 🎛️ User Interface Controls
+
+The frontend provides several toggle controls for different viewing modes:
+
+### View Mode Toggles
+- **Cards/List Toggle**: Switch between card view and table view
+- **Hierarchy Toggle**: 
+  - **Flat**: Shows all labs in a single list
+  - **Hierarchy**: Shows departments containing research groups
+- **Institution Grouping Toggle**:
+  - **Mixed**: Labs displayed individually
+  - **Grouped**: Labs grouped by institution in expandable cards
+
+### Research Group Management
+- **Expand Departments**: Click on department cards to see research groups
+- **Create Groups**: Add new research groups within departments
+- **Edit Groups**: Modify existing research group information
+- **View Papers**: See publications associated with each research group
+
 ## 📡 API Endpoints
 
 ### Labs
 - `GET /api/labs` - List all robotics labs
 - `GET /api/labs?limit=10&country=USA` - Filtered labs
 - `GET /api/labs/{id}` - Specific lab details
+- `GET /api/labs/hierarchy` - Hierarchical lab structure with departments and groups
+- `GET /api/labs/{id}/groups` - Get research groups within a department
+- `POST /api/labs/{id}/groups` - Create new research group within a department
 
 ### Papers (Coming Soon)
 - `GET /api/papers` - Research papers
@@ -130,6 +184,9 @@ npm start           # Start development server
 
 - **Geographic Visualization**: Interactive world map with lab locations
 - **Lab Markers**: Click markers to view lab details, PI, research focus
+- **Hierarchical Display**: Toggle between flat and hierarchical lab organization
+- **Institution Grouping**: Group labs by institution for better organization
+- **Research Group Cards**: Expandable cards showing research groups within institutions
 - **Country Clustering**: Visual grouping by research density
 - **Search & Filter**: Real-time filtering by name, country, research area
 - **Statistics Panel**: Live counts of labs, countries, research areas
@@ -140,7 +197,10 @@ npm start           # Start development server
 |-----------|--------|-------------|
 | **Backend API** | ✅ Complete | Flask server with SQLite, 47 labs imported |
 | **Database Models** | ✅ Complete | Lab, Paper, Researcher, Citation entities |
-| **Frontend Structure** | ✅ Ready | React components, API integration setup |
+| **Hierarchical Labs** | ✅ Complete | Multi-level lab structure with departments and groups |
+| **Institution Grouping** | ✅ Complete | Group labs by institution with toggle controls |
+| **Research Group Management** | ✅ Complete | Create and manage research groups within departments |
+| **Frontend Structure** | ✅ Complete | React components with hierarchy and grouping support |
 | **Interactive Map** | 🔄 In Progress | Mapbox integration (needs API key) |
 | **Paper Tracking** | 📋 Planned | arXiv, Google Scholar automation |
 | **Trend Analysis** | 📋 Planned | NLP-powered research trend detection |
@@ -230,10 +290,13 @@ python scripts/import_labs.py data/robot_learning_labs_directory.csv
 ## 📈 Usage
 
 1. **Browse Labs**: Interactive map with lab information and research focus
-2. **Search Papers**: Real-time search across tracked publications
-3. **Analyze Trends**: View emerging research directions and hot topics
-4. **Track Citations**: Monitor paper impact and citation networks
-5. **Export Data**: Download filtered results in various formats
+2. **Organize by Hierarchy**: Toggle hierarchical view to see departments and research groups
+3. **Group by Institution**: Use institution grouping to see labs organized by university/company
+4. **Manage Research Groups**: Create and edit research groups within larger institutions
+5. **Search Papers**: Real-time search across tracked publications
+6. **Analyze Trends**: View emerging research directions and hot topics
+7. **Track Citations**: Monitor paper impact and citation networks
+8. **Export Data**: Download filtered results in various formats
 
 ## 🧪 Development
 
