@@ -251,7 +251,7 @@ def scrape_papers():
                         results.append({
                             'lab_id': lab.id,
                             'lab_name': lab.name,
-                            'papers_found': len(lab_results),
+                            'papers_found': lab_results,  # lab_results is already an int
                             'success': True
                         })
                     except Exception as e:
@@ -285,6 +285,65 @@ def scrape_papers():
         return jsonify({
             'message': 'Paper scraping completed',
             'results': results,
+            'status': 'completed'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@labs_bp.route('/scrape-institutional-papers', methods=['POST'])
+def scrape_institutional_papers():
+    """Scrape papers from institutions for unknown labs/authors"""
+    try:
+        data = request.get_json()
+        institutions = data.get('institutions', [])
+        max_papers = data.get('max_papers', 10)
+        
+        if not institutions:
+            return jsonify({'error': 'No institutions provided'}), 400
+        
+        def run_institutional_scraping():
+            """Run institutional scraping in background thread"""
+            async def async_scrape():
+                scraper = LabPaperScraper()
+                all_papers = []
+                
+                for institution in institutions:
+                    try:
+                        institutional_papers = await scraper.scrape_institutional_papers(
+                            institution, max_papers=max_papers
+                        )
+                        all_papers.extend(institutional_papers)
+                    except Exception as e:
+                        print(f"Failed to scrape {institution}: {e}")
+                        continue
+                
+                return all_papers
+            
+            return asyncio.run(async_scrape())
+        
+        # Run scraping in background thread
+        papers = []
+        
+        def background_scrape():
+            nonlocal papers
+            papers = run_institutional_scraping()
+        
+        thread = threading.Thread(target=background_scrape)
+        thread.start()
+        thread.join(timeout=120)  # 2 minute timeout for institutional search
+        
+        if thread.is_alive():
+            return jsonify({
+                'message': 'Institutional scraping started in background',
+                'status': 'running'
+            }), 202
+        
+        return jsonify({
+            'message': 'Institutional paper scraping completed',
+            'papers': papers,
+            'total_papers': len(papers),
             'status': 'completed'
         })
         

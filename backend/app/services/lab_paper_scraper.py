@@ -14,8 +14,8 @@ class LabPaperScraper:
     """Enhanced paper scraper for robotics labs"""
     
     def __init__(self):
-        self.rate_limit_delay = 2  # seconds between requests
-        self.max_papers_per_lab = 10
+        self.rate_limit_delay = 1  # Reduced from 2 to 1 second
+        self.max_papers_per_lab = 15  # Increased from 10 to 15
         self.session = None
     
     async def scrape_all_labs(self):
@@ -45,18 +45,25 @@ class LabPaperScraper:
         print(f"\n🎉 Scraping complete! Total papers found: {total_papers}")
         return total_papers
     
-    async def scrape_lab_papers(self, lab: Lab) -> int:
+    async def scrape_lab_papers(self, lab: Lab, sources: List[str] = None, max_papers: int = None) -> int:
         """Scrape papers for a specific lab using multiple strategies"""
+        if sources is None:
+            sources = ['arxiv', 'scholar', 'website']
+        if max_papers is not None:
+            self.max_papers_per_lab = max_papers
+            
         papers_found = 0
         
         # Strategy 1: ArXiv search by PI name and institution
-        papers_found += await self.search_arxiv_papers(lab)
+        if 'arxiv' in sources:
+            papers_found += await self.search_arxiv_papers(lab)
         
         # Strategy 2: Google Scholar search
-        papers_found += await self.search_scholar_papers(lab)
+        if 'scholar' in sources:
+            papers_found += await self.search_scholar_papers(lab)
         
         # Strategy 3: Lab website scraping
-        if lab.website:
+        if 'website' in sources and lab.website:
             papers_found += await self.scrape_website_papers(lab)
         
         return papers_found
@@ -68,33 +75,45 @@ class LabPaperScraper:
         try:
             # Create search queries
             queries = self._build_arxiv_queries(lab)
+            print(f"  🔍 ArXiv queries for {lab.name}: {queries}")
             
             for query in queries:
                 try:
+                    print(f"  📝 Executing query: {query}")
                     search = arxiv.Search(
                         query=query,
-                        max_results=5,
-                        sort_by=arxiv.SortCriterion.Relevance
+                        max_results=min(10, self.max_papers_per_lab),  # Increased from 5 to 10
+                        sort_by=arxiv.SortCriterion.SubmittedDate  # Changed to submitted date for more recent papers
                     )
                     
+                    query_papers = 0
                     for paper in search.results():
+                        print(f"    📄 Found paper: {paper.title}")
                         if await self._import_arxiv_paper(paper, lab):
                             papers_found += 1
-                            if papers_found >= self.max_papers_per_lab:
-                                break
+                            query_papers += 1
+                            print(f"    ✅ Imported paper")
+                        else:
+                            print(f"    ⏭️  Skipped paper (duplicate or not robotics-related)")
+                            
+                        if papers_found >= self.max_papers_per_lab:
+                            break
+                    
+                    print(f"  📊 Query found {query_papers} new papers")
                     
                     if papers_found >= self.max_papers_per_lab:
                         break
                         
-                    await asyncio.sleep(1)  # Rate limiting
+                    await asyncio.sleep(0.5)  # Reduced rate limiting from 1s to 0.5s
                     
                 except Exception as e:
-                    print(f"  ArXiv query failed: {query} - {e}")
+                    print(f"  ❌ ArXiv query failed: {query} - {e}")
                     continue
                     
         except Exception as e:
-            print(f"  ArXiv search failed for {lab.name}: {e}")
+            print(f"  ❌ ArXiv search failed for {lab.name}: {e}")
         
+        print(f"  📚 Total ArXiv papers found for {lab.name}: {papers_found}")
         return papers_found
     
     async def search_scholar_papers(self, lab: Lab) -> int:
@@ -167,34 +186,181 @@ class LabPaperScraper:
         
         return papers_found
     
+    async def scrape_institutional_papers(self, institution: str, max_papers: int = 10) -> List[dict]:
+        """Scrape papers from an institution that might not belong to existing labs"""
+        papers = []
+        
+        try:
+            # Build institutional queries
+            queries = self._build_institutional_queries(institution)
+            print(f"  🔍 Institutional queries for {institution}: {queries}")
+            
+            for query in queries:
+                try:
+                    print(f"  📝 Executing institutional query: {query}")
+                    search = arxiv.Search(
+                        query=query,
+                        max_results=max_papers // len(queries) + 1,  # Distribute across queries
+                        sort_by=arxiv.SortCriterion.SubmittedDate
+                    )
+                    
+                    for paper in search.results():
+                        print(f"    📄 Found institutional paper: {paper.title}")
+                        
+                        # Check if this paper belongs to any existing lab
+                        if await self._paper_belongs_to_existing_lab(paper):
+                            print(f"    ⏭️  Paper belongs to existing lab, skipping")
+                            continue
+                        
+                        # Verify relevance to robotics (stricter filter for institutional search)
+                        if not self._is_robotics_paper(paper.title, paper.summary, relaxed=False):
+                            print(f"    ⏭️  Paper not relevant to robotics")
+                            continue
+                        
+                        # Extract paper data
+                        authors = [str(author) for author in paper.authors]
+                        paper_data = {
+                            'title': paper.title.strip(),
+                            'authors': authors,
+                            'abstract': paper.summary.strip(),
+                            'publication_date': paper.published.date().isoformat(),
+                            'venue': 'arXiv',
+                            'paper_type': 'preprint',
+                            'arxiv_id': paper.entry_id.split('/')[-1],
+                            'pdf_url': paper.pdf_url,
+                            'institution': institution,
+                            'discovered_via': 'institutional_search'
+                        }
+                        
+                        papers.append(paper_data)
+                        print(f"    ✅ Added institutional paper")
+                        
+                        if len(papers) >= max_papers:
+                            break
+                    
+                    if len(papers) >= max_papers:
+                        break
+                        
+                    await asyncio.sleep(1)  # Rate limiting
+                    
+                except Exception as e:
+                    print(f"  ❌ Institutional query failed: {query} - {e}")
+                    continue
+                    
+        except Exception as e:
+            print(f"  ❌ Institutional search failed for {institution}: {e}")
+        
+        print(f"  📚 Total institutional papers found for {institution}: {len(papers)}")
+        return papers
+    
+    def _build_institutional_queries(self, institution: str) -> List[str]:
+        """Build queries to find robotics papers from an institution"""
+        institution_short = institution.split()[0]  # First word
+        
+        queries = [
+            f'{institution_short} AND (robot learning)',
+            f'{institution_short} AND (robot manipulation)', 
+            f'{institution_short} AND (autonomous robot)',
+            f'{institution_short} AND (robotics AND learning)',
+            f'{institution_short} AND (embodied ai)',
+            f'{institution_short} AND (robot perception)',
+        ]
+        
+        return queries[:4]  # Limit to 4 queries
+    
+    async def _paper_belongs_to_existing_lab(self, arxiv_paper) -> bool:
+        """Check if a paper belongs to any existing lab by checking authors"""
+        from app.models import Lab
+        
+        # Get all lab PIs
+        labs = Lab.query.all()
+        pi_last_names = set()
+        
+        for lab in labs:
+            if lab.pi and lab.pi != 'Multiple PIs':
+                pi_name = lab.pi.strip()
+                if ' ' in pi_name:
+                    last_name = pi_name.split()[-1].lower()
+                    pi_last_names.add(last_name)
+        
+        # Check if any paper author matches a known PI
+        paper_authors = [str(author).lower() for author in arxiv_paper.authors]
+        
+        for author in paper_authors:
+            author_last_name = author.split()[-1] if ' ' in author else author
+            if author_last_name in pi_last_names:
+                return True
+        
+        return False
+    
     def _build_arxiv_queries(self, lab: Lab) -> List[str]:
         """Build ArXiv search queries for a lab"""
+        import json
         queries = []
         
-        # PI name query
+        # PI name query (more specific)
         pi_name = lab.pi.replace('"', '').strip()
         if ' ' in pi_name:
             last_name = pi_name.split()[-1]
-            queries.append(f'au:"{last_name}" AND (robot OR robotics)')
+            # More focused query - author + robotics terms
+            queries.append(f'au:"{last_name}" AND (robot OR robotics OR autonomous OR manipulation)')
+            
+            # Also try full name for highly prolific authors
+            if len(pi_name.split()) == 2:
+                first_name = pi_name.split()[0][:3]  # First 3 letters to handle variations
+                queries.append(f'au:"{first_name}*{last_name}" AND (robot OR learning)')
         
-        # Institution + focus areas
-        institution_short = lab.institution.split()[0]  # First word of institution
-        focus_terms = []
-        
+        # Focus area queries (without institution restriction)
         if lab.focus_areas:
-            for area in lab.focus_areas[:3]:  # Limit to top 3 focus areas
-                area_clean = area.lower().replace('"', '')
-                if 'robot' in area_clean or 'learning' in area_clean:
-                    focus_terms.append(area_clean)
+            try:
+                # Parse JSON string to list
+                focus_list = json.loads(lab.focus_areas)
+                for area in focus_list[:2]:  # Top 2 focus areas only
+                    area_clean = area.lower().replace('"', '').strip()
+                    if len(area_clean) > 3:  # Avoid very short terms
+                        # Create focused search for this area
+                        if 'learning' in area_clean:
+                            queries.append(f'"{area_clean}" AND robot')
+                        elif 'robot' in area_clean:
+                            queries.append(f'"{area_clean}"')
+                        elif any(term in area_clean for term in ['manipulation', 'perception', 'navigation', 'control']):
+                            queries.append(f'"{area_clean}" AND (robot OR robotics)')
+            except (json.JSONDecodeError, TypeError):
+                # Fallback: treat as comma-separated string
+                focus_list = lab.focus_areas.split(',')
+                for area in focus_list[:2]:
+                    area_clean = area.strip().lower().replace('"', '')
+                    if len(area_clean) > 3:
+                        queries.append(f'"{area_clean}" AND robot')
         
-        if focus_terms:
-            focus_query = ' OR '.join([f'"{term}"' for term in focus_terms])
-            queries.append(f'({focus_query}) AND {institution_short}')
+        # Lab name based query (extract meaningful terms)
+        lab_name_clean = lab.name.lower()
+        lab_terms = []
         
-        # Generic robotics query for the institution
-        queries.append(f'{institution_short} AND (robot learning OR robot manipulation)')
+        # Extract specific robotics terms from lab name
+        robotics_terms = ['manipulation', 'perception', 'learning', 'locomotion', 'navigation', 'vision', 'control']
+        for term in robotics_terms:
+            if term in lab_name_clean:
+                lab_terms.append(term)
         
-        return queries[:3]  # Limit to 3 queries
+        if lab_terms:
+            # Create a focused query with lab-specific terms
+            lab_query = ' OR '.join(lab_terms)
+            queries.append(f'({lab_query}) AND robot')
+        
+        # Generic robotics query with PI if no specific terms found
+        if not queries or len(queries) < 2:
+            if pi_name and ' ' in pi_name:
+                last_name = pi_name.split()[-1]
+                queries.append(f'au:"{last_name}" AND (deep learning OR reinforcement learning)')
+        
+        # Remove duplicates and limit
+        unique_queries = []
+        for q in queries:
+            if q not in unique_queries:
+                unique_queries.append(q)
+        
+        return unique_queries[:3]  # Limit to 3 most relevant queries
     
     async def _import_arxiv_paper(self, arxiv_paper, lab: Lab) -> bool:
         """Import a paper from ArXiv"""
@@ -211,21 +377,23 @@ class LabPaperScraper:
             title = arxiv_paper.title.strip()
             abstract = arxiv_paper.summary.strip()
             
-            # Verify relevance to robotics
-            if not self._is_robotics_paper(title, abstract):
+            # Verify relevance to robotics - relaxed filter for author-based search
+            if not self._is_robotics_paper(title, abstract, relaxed=True):
                 return False
+            
+            import json
             
             paper = Paper(
                 title=title,
-                authors=authors,
+                authors=json.dumps(authors),  # Convert list to JSON string
                 abstract=abstract,
                 publication_date=arxiv_paper.published.date(),
                 venue='arXiv',
                 paper_type='preprint',
                 arxiv_id=arxiv_id,
                 pdf_url=arxiv_paper.pdf_url,
-                research_areas=self._extract_research_areas(title + " " + abstract),
-                keywords=self._extract_keywords(title + " " + abstract),
+                research_areas=json.dumps(self._extract_research_areas(title + " " + abstract)),  # Convert to JSON
+                keywords=json.dumps(self._extract_keywords(title + " " + abstract)),  # Convert to JSON
                 lab_id=lab.id,
                 citation_count=0
             )
@@ -259,8 +427,8 @@ class LabPaperScraper:
             venue = scholar_paper.get('venue', 'Unknown')
             citation_count = scholar_paper.get('num_citations', 0)
             
-            # Verify relevance
-            if not self._is_robotics_paper(title, abstract):
+            # Verify relevance - relaxed filter for scholar search
+            if not self._is_robotics_paper(title, abstract, relaxed=True):
                 return False
             
             # Try to get publication date
@@ -273,15 +441,17 @@ class LabPaperScraper:
             else:
                 pub_date = datetime.now().date()
             
+            import json
+            
             paper = Paper(
                 title=title,
-                authors=authors,
+                authors=json.dumps(authors),  # Convert list to JSON string
                 abstract=abstract,
                 publication_date=pub_date,
                 venue=venue,
                 paper_type='journal' if 'journal' in venue.lower() else 'conference',
-                research_areas=self._extract_research_areas(title + " " + abstract),
-                keywords=self._extract_keywords(title + " " + abstract),
+                research_areas=json.dumps(self._extract_research_areas(title + " " + abstract)),  # Convert to JSON
+                keywords=json.dumps(self._extract_keywords(title + " " + abstract)),  # Convert to JSON
                 lab_id=lab.id,
                 citation_count=citation_count or 0
             )
@@ -365,18 +535,105 @@ class LabPaperScraper:
             db.session.rollback()
             return False
     
-    def _is_robotics_paper(self, title: str, abstract: str) -> bool:
-        """Check if a paper is related to robotics"""
+    def _is_robotics_paper(self, title: str, abstract: str, relaxed: bool = False) -> bool:
+        """Check if a paper is related to robotics
+        
+        Args:
+            title: Paper title
+            abstract: Paper abstract  
+            relaxed: If True, use more lenient filtering (for author-based searches)
+        """
         text = (title + " " + abstract).lower()
         
-        robotics_keywords = [
-            'robot', 'robotics', 'robotic', 'manipulation', 'grasp', 'grasping',
-            'locomotion', 'navigation', 'slam', 'autonomous', 'reinforcement learning',
-            'imitation learning', 'robot learning', 'embodied', 'dexterous',
-            'humanoid', 'mobile robot', 'arm', 'gripper', 'actuator', 'sensor fusion'
-        ]
+        if relaxed:
+            # More relaxed filter for papers by known robotics researchers
+            relaxed_keywords = [
+                # Core robotics terms
+                'robot', 'robotics', 'robotic', 'automation', 'autonomous', 'humanoid', 'android',
+                'cyborg', 'mechatronic', 'mechatronics', 'mobile robot', 'service robot',
+                
+                # Manipulation & grasping
+                'manipulation', 'grasp', 'grasping', 'gripping', 'gripper', 'end-effector',
+                'pick and place', 'pick-and-place', 'dexterous', 'dexterity', 'fine motor',
+                'object handling', 'tactile', 'haptic', 'force feedback', 'torque control',
+                
+                # Locomotion & movement
+                'locomotion', 'walking', 'running', 'jumping', 'climbing', 'swimming',
+                'flying', 'hovering', 'gait', 'legged', 'bipedal', 'quadrupedal',
+                'wheeled', 'tracked', 'aerial', 'underwater', 'ground vehicle',
+                
+                # Navigation & mapping
+                'navigation', 'path planning', 'route planning', 'slam', 'mapping',
+                'localization', 'odometry', 'waypoint', 'obstacle avoidance',
+                'collision avoidance', 'motion planning', 'trajectory', 'pathfinding',
+                
+                # Learning & AI
+                'reinforcement learning', 'imitation learning', 'robot learning',
+                'embodied learning', 'transfer learning', 'meta-learning',
+                'neural', 'deep learning', 'machine learning', 'ai', 'artificial intelligence',
+                'neural network', 'deep neural', 'convolutional', 'recurrent', 'transformer',
+                'policy', 'policy gradient', 'q-learning', 'actor-critic', 'supervised learning',
+                'unsupervised learning', 'semi-supervised', 'self-supervised',
+                
+                # Perception & sensing
+                'perception', 'vision', 'computer vision', 'visual', 'camera', 'stereo vision',
+                'lidar', 'radar', 'sonar', 'ultrasonic', 'sensor fusion', 'multi-modal',
+                'rgb-d', 'point cloud', 'depth estimation', 'object detection',
+                'object recognition', 'scene understanding', 'semantic segmentation',
+                
+                # Control & dynamics
+                'control', 'optimal control', 'adaptive control', 'robust control',
+                'model predictive control', 'mpc', 'pid', 'feedback control',
+                'dynamics', 'kinematics', 'actuator', 'servo', 'motor control',
+                'force control', 'impedance control', 'admittance control',
+                
+                # Simulation & modeling
+                'simulation', 'simulator', 'virtual', 'digital twin', 'modeling',
+                'physics simulation', 'gazebo', 'unity', 'unreal', 'mujoco',
+                'real-to-sim', 'sim-to-real', 'domain adaptation',
+                
+                # Human-robot interaction
+                'human-robot interaction', 'hri', 'human-robot collaboration',
+                'social robot', 'assistive robot', 'companion robot',
+                'gesture recognition', 'speech recognition', 'natural language',
+                
+                # Specific applications
+                'industrial robot', 'manufacturing', 'assembly', 'welding',
+                'medical robot', 'surgical robot', 'rehabilitation robot',
+                'agricultural robot', 'cleaning robot', 'security robot',
+                'search and rescue', 'exploration', 'inspection',
+                
+                # Advanced concepts
+                'swarm robotics', 'multi-robot', 'distributed', 'cooperative',
+                'bio-inspired', 'biomimetic', 'soft robotics', 'continuum robot',
+                'compliant', 'elastic', 'morphology', 'embodied intelligence'
+            ]
+        else:
+            # Stricter filter for general searches
+            relaxed_keywords = [
+                # Core robotics terms
+                'robot', 'robotics', 'robotic', 'autonomous', 'humanoid',
+                'mobile robot', 'service robot', 'industrial robot',
+                
+                # Manipulation
+                'manipulation', 'grasp', 'grasping', 'gripper', 'dexterous',
+                'pick and place', 'end-effector', 'tactile', 'haptic',
+                
+                # Locomotion
+                'locomotion', 'walking', 'gait', 'legged', 'bipedal', 'quadrupedal',
+                'navigation', 'path planning', 'slam', 'mapping', 'localization',
+                
+                # Learning & control
+                'reinforcement learning', 'imitation learning', 'robot learning',
+                'embodied', 'control', 'optimal control', 'planning', 'policy',
+                'actuator', 'sensor fusion', 'perception', 'vision',
+                
+                # Key applications
+                'human-robot interaction', 'manipulation', 'navigation',
+                'autonomous vehicle', 'medical robot', 'assembly robot'
+            ]
         
-        return any(keyword in text for keyword in robotics_keywords)
+        return any(keyword in text for keyword in relaxed_keywords)
     
     def _looks_like_paper_title(self, text: str) -> bool:
         """Check if text looks like a paper title"""
@@ -391,7 +648,7 @@ class LabPaperScraper:
         words = text.split()
         properly_capitalized = sum(1 for word in words if word[0].isupper()) >= len(words) * 0.5
         
-        return has_indicator and properly_capitalized and self._is_robotics_paper(text, '')
+        return has_indicator and properly_capitalized and self._is_robotics_paper(text, '', relaxed=False)
     
     def _extract_research_areas(self, text: str) -> List[str]:
         """Extract research areas from text"""
@@ -399,19 +656,71 @@ class LabPaperScraper:
         text_lower = text.lower()
         
         area_keywords = {
-            'manipulation': ['manipulation', 'grasp', 'grasping', 'pick', 'place'],
-            'locomotion': ['locomotion', 'walking', 'running', 'gait', 'legged'],
-            'learning': ['learning', 'reinforcement', 'imitation', 'supervised'],
-            'perception': ['perception', 'vision', 'visual', 'camera', 'lidar'],
-            'navigation': ['navigation', 'path planning', 'slam', 'mapping'],
-            'control': ['control', 'controller', 'feedback', 'pid', 'mpc']
+            'manipulation': [
+                'manipulation', 'grasp', 'grasping', 'gripping', 'gripper', 'pick', 'place',
+                'pick and place', 'pick-and-place', 'dexterous', 'dexterity', 'end-effector',
+                'tactile', 'haptic', 'force feedback', 'object handling', 'fine motor',
+                'assembly', 'welding', 'sorting', 'bin picking'
+            ],
+            'locomotion': [
+                'locomotion', 'walking', 'running', 'jumping', 'climbing', 'gait', 'legged',
+                'bipedal', 'quadrupedal', 'hexapod', 'wheeled', 'tracked', 'flying',
+                'aerial', 'drone', 'uav', 'underwater', 'swimming', 'hovering',
+                'balance', 'stability', 'dynamic walking', 'terrain adaptation'
+            ],
+            'learning': [
+                'learning', 'reinforcement learning', 'imitation learning', 'supervised learning',
+                'unsupervised learning', 'transfer learning', 'meta-learning', 'few-shot learning',
+                'neural network', 'deep learning', 'machine learning', 'policy learning',
+                'reward', 'q-learning', 'actor-critic', 'policy gradient', 'demonstration',
+                'self-supervised', 'continual learning', 'lifelong learning'
+            ],
+            'perception': [
+                'perception', 'vision', 'computer vision', 'visual', 'camera', 'stereo vision',
+                'lidar', 'radar', 'sonar', 'rgb-d', 'depth', 'point cloud', 'sensor fusion',
+                'object detection', 'object recognition', 'segmentation', 'tracking',
+                'scene understanding', 'semantic mapping', 'visual odometry', 'feature extraction'
+            ],
+            'navigation': [
+                'navigation', 'path planning', 'route planning', 'slam', 'mapping', 'localization',
+                'waypoint', 'obstacle avoidance', 'collision avoidance', 'motion planning',
+                'trajectory planning', 'pathfinding', 'exploration', 'coverage',
+                'autonomous navigation', 'gps', 'indoor navigation', 'outdoor navigation'
+            ],
+            'control': [
+                'control', 'controller', 'feedback', 'pid', 'mpc', 'model predictive control',
+                'optimal control', 'adaptive control', 'robust control', 'force control',
+                'position control', 'velocity control', 'impedance control', 'admittance control',
+                'dynamics', 'kinematics', 'actuator', 'servo', 'motor control', 'stabilization'
+            ],
+            'human_robot_interaction': [
+                'human-robot interaction', 'hri', 'human-robot collaboration', 'social robot',
+                'assistive robot', 'companion robot', 'gesture recognition', 'speech recognition',
+                'natural language', 'emotion recognition', 'eye tracking', 'telepresence',
+                'shared control', 'cooperative', 'collaborative'
+            ],
+            'simulation': [
+                'simulation', 'simulator', 'virtual', 'digital twin', 'modeling', 'gazebo',
+                'unity', 'unreal', 'mujoco', 'bullet', 'physics simulation', 'real-to-sim',
+                'sim-to-real', 'domain adaptation', 'synthetic data', 'virtual environment'
+            ],
+            'swarm_robotics': [
+                'swarm robotics', 'multi-robot', 'distributed', 'cooperative', 'collective',
+                'consensus', 'formation control', 'flocking', 'coordination', 'multi-agent',
+                'decentralized', 'emergent behavior', 'self-organization'
+            ],
+            'soft_robotics': [
+                'soft robotics', 'soft robot', 'continuum robot', 'compliant', 'elastic',
+                'pneumatic', 'hydraulic', 'shape memory', 'bio-inspired', 'biomimetic',
+                'morphology', 'deformable', 'flexible', 'cable-driven'
+            ]
         }
         
         for area, keywords in area_keywords.items():
             if any(keyword in text_lower for keyword in keywords):
                 areas.append(area)
         
-        return areas[:5]  # Limit to top 5
+        return areas[:8]  # Limit to top 8 areas (increased from 5 to accommodate new categories)
     
     def _extract_keywords(self, text: str) -> List[str]:
         """Extract keywords from text"""
