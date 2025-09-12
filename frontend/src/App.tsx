@@ -107,6 +107,9 @@ const App: React.FC = () => {
   const [selectedLabsForScraping, setSelectedLabsForScraping] = useState<number[]>([]);
   const [scrapingSources, setScrapingSources] = useState<string[]>(['arxiv']);
   const [scrapingInProgress, setScrapingInProgress] = useState(false);
+  const [maxPapersToScrape, setMaxPapersToScrape] = useState<number>(5);
+  const [institutionalPapers, setInstitutionalPapers] = useState<any[]>([]);
+  const [showInstitutionalScrapeModal, setShowInstitutionalScrapeModal] = useState(false);
   const [labFormVisible, setLabFormVisible] = useState(false);
   const [currentLab, setCurrentLab] = useState<Lab | null>(null);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
@@ -155,7 +158,7 @@ const App: React.FC = () => {
         body: JSON.stringify({
           lab_ids: selectedLabsForScraping,
           sources: scrapingSources,
-          max_papers: 5
+          max_papers: maxPapersToScrape
         })
       });
       
@@ -178,6 +181,48 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error('Error during scraping:', error);
+    } finally {
+      setScrapingInProgress(false);
+    }
+  };
+
+  const handleInstitutionalScraping = async () => {
+    try {
+      setScrapingInProgress(true);
+      
+      // Get unique institutions from current labs
+      const institutions = Array.from(new Set(labs.map(lab => lab.institution)));
+      
+      const response = await fetch('http://127.0.0.1:8080/api/labs/scrape-institutional-papers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          institutions: institutions,
+          max_papers: maxPapersToScrape
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Institutional scraping result:', result);
+        
+        if (result.papers && result.papers.length > 0) {
+          setInstitutionalPapers(result.papers);
+          message.success(`Found ${result.papers.length} papers from institutional search!`);
+        } else {
+          message.info('No new institutional papers found.');
+        }
+        
+        setShowInstitutionalScrapeModal(false);
+      } else {
+        console.error('Institutional scraping failed:', response.statusText);
+        message.error('Institutional scraping failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error during institutional scraping:', error);
+      message.error('Error during institutional scraping.');
     } finally {
       setScrapingInProgress(false);
     }
@@ -533,6 +578,16 @@ const App: React.FC = () => {
               icon={<DownloadOutlined />}
             >
               Scrape Latest Papers
+            </Button>
+            
+            <Button 
+              type="default" 
+              block 
+              style={{ marginTop: 8 }}
+              onClick={() => setShowInstitutionalScrapeModal(true)}
+              icon={<SearchOutlined />}
+            >
+              Find Other Lab Papers
             </Button>
           </Card>
 
@@ -1200,6 +1255,72 @@ const App: React.FC = () => {
                             </Col>
                           );
                         })}
+                        
+                        {/* Institutional Papers Card (Other Labs) */}
+                        {institutionalPapers.length > 0 && (
+                          <Col span={8} key="institutional-papers">
+                            <Card 
+                              size="small" 
+                              className="lab-card"
+                              title={
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Avatar style={{ backgroundColor: '#722ed1' }}>
+                                      🌐
+                                    </Avatar>
+                                    <span style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                                      Other Labs
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Tag color="purple">{institutionalPapers.length} papers</Tag>
+                                  </div>
+                                </div>
+                              }
+                              style={{ 
+                                height: '250px',
+                                cursor: 'default',
+                                border: '1px solid #722ed1',
+                              }}
+                            >
+                              <div style={{ height: '160px', overflowY: 'auto' }}>
+                                <p><strong>Recent papers found from institutional searches:</strong></p>
+                                
+                                {institutionalPapers.slice(0, 2).map((paper, index) => (
+                                  <div key={index} style={{ marginBottom: 12, padding: 8, background: '#f9f9f9', borderRadius: 4 }}>
+                                    <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: 4 }}>
+                                      {paper.title.length > 50 ? paper.title.substring(0, 50) + '...' : paper.title}
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: '#666', marginBottom: 4 }}>
+                                      <strong>Authors:</strong> {formatAuthors(paper.authors)}
+                                    </div>
+                                    {paper.publication_date && (
+                                      <div style={{ fontSize: '11px', color: '#999' }}>
+                                        {new Date(paper.publication_date).getFullYear()}
+                                      </div>
+                                    )}
+                                    {paper.pdf_url && (
+                                      <Button 
+                                        type="link" 
+                                        size="small"
+                                        href={paper.pdf_url}
+                                        target="_blank"
+                                        style={{ padding: 0, height: 'auto', fontSize: '11px' }}
+                                      >
+                                        View PDF →
+                                      </Button>
+                                    )}
+                                  </div>
+                                ))}
+                                {institutionalPapers.length > 2 && (
+                                  <div style={{ textAlign: 'center', fontSize: '12px', color: '#666' }}>
+                                    +{institutionalPapers.length - 2} more papers discovered
+                                  </div>
+                                )}
+                              </div>
+                            </Card>
+                          </Col>
+                        )}
                       </Row>
                     ) : (
                       // List View
@@ -1471,12 +1592,76 @@ const App: React.FC = () => {
           </Checkbox.Group>
         </div>
 
+        <div style={{ marginBottom: 16 }}>
+          <h4>Maximum Papers per Lab:</h4>
+          <Select
+            value={maxPapersToScrape}
+            onChange={setMaxPapersToScrape}
+            style={{ width: 200 }}
+          >
+            <Select.Option value={1}>1 paper</Select.Option>
+            <Select.Option value={3}>3 papers</Select.Option>
+            <Select.Option value={5}>5 papers</Select.Option>
+            <Select.Option value={10}>10 papers</Select.Option>
+            <Select.Option value={20}>20 papers</Select.Option>
+          </Select>
+        </div>
+
         <Alert
           message="Paper Scraping Info"
-          description="This will scrape up to 5 recent papers per lab from the selected sources. The process may take a few minutes."
+          description={`This will scrape up to ${maxPapersToScrape} recent papers per lab from the selected sources. The process may take a few minutes.`}
           type="info"
           showIcon
         />
+      </Modal>
+
+      <Modal
+        title="Find Other Lab Papers (Institutional Search)"
+        open={showInstitutionalScrapeModal}
+        onOk={handleInstitutionalScraping}
+        onCancel={() => setShowInstitutionalScrapeModal(false)}
+        confirmLoading={scrapingInProgress}
+        width={600}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Alert
+            message="Institutional Paper Discovery"
+            description="This feature searches for robotics papers from researchers at specific institutions using keywords, titles, and author patterns. Papers found will be displayed as 'Other Labs' with extracted author information."
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+          
+          <h4>Search Parameters:</h4>
+          <ul style={{ paddingLeft: 20, marginBottom: 16 }}>
+            <li>Institution-based searches (universities, research centers)</li>
+            <li>Robotics keywords filtering (manipulation, perception, navigation, etc.)</li>
+            <li>Recent publications (last 2-3 years)</li>
+            <li>Author name and affiliation extraction</li>
+          </ul>
+          
+          <div style={{ marginBottom: 16 }}>
+            <h4>Max Papers to Find:</h4>
+            <Select
+              value={maxPapersToScrape}
+              onChange={setMaxPapersToScrape}
+              style={{ width: '100%' }}
+            >
+              <Option value={1}>1 paper</Option>
+              <Option value={3}>3 papers</Option>
+              <Option value={5}>5 papers</Option>
+              <Option value={10}>10 papers</Option>
+              <Option value={20}>20 papers</Option>
+            </Select>
+          </div>
+          
+          <Alert
+            message="Note"
+            description="This search will look for papers from researchers at major universities and research institutions not currently in your lab database."
+            type="warning"
+            showIcon
+          />
+        </div>
       </Modal>
 
       <LabFormModal
