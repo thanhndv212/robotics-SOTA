@@ -48,6 +48,7 @@ import {
   DollarOutlined
 } from '@ant-design/icons';
 import LabFormModal from './components/LabFormModal';
+import ResearchGroupManager from './components/ResearchGroupManager';
 import './App.css';
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -59,17 +60,22 @@ interface Lab {
   name: string;
   pi: string;
   institution: string;
-  city: string;
-  country: string;
-  latitude: number;
-  longitude: number;
-  focus_areas: string[];
+  city?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
+  focus_areas?: string[];
   website?: string;
   description?: string;
   established_year?: number;
   funding_sources?: string[];
-  papers?: Paper[];
+  papers?: any[];
   paper_count?: number;
+  lab_type?: string;
+  parent_lab_id?: number;
+  parent_lab?: string;
+  sub_groups?: Lab[];
+  sub_groups_count?: number;
 }
 
 interface Paper {
@@ -105,31 +111,38 @@ const App: React.FC = () => {
   const [currentLab, setCurrentLab] = useState<Lab | null>(null);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
+  const [hierarchyView, setHierarchyView] = useState(false);
+  const [groupByInstitution, setGroupByInstitution] = useState(false);
   const pageSize = 12;
 
-  useEffect(() => {
-    const loadLabs = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('http://127.0.0.1:8080/api/labs/?include_papers=true');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('Loaded labs:', data.length);
-        setLabs(data);
-        setFilteredLabs(data);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load robotics labs data');
-        console.error('Error loading labs:', err);
-      } finally {
-        setLoading(false);
+  const loadLabs = async () => {
+    try {
+      setLoading(true);
+      const url = hierarchyView 
+        ? 'http://127.0.0.1:8080/api/labs/hierarchy?include_papers=true'
+        : 'http://127.0.0.1:8080/api/labs/?include_papers=true&include_sub_groups=true';
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      const data = await response.json();
+      const labsData = hierarchyView ? data.labs : data;
+      console.log('Loaded labs:', labsData.length);
+      setLabs(labsData);
+      setFilteredLabs(labsData);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load robotics labs data');
+      console.error('Error loading labs:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadLabs();
-  }, []);
+  }, [hierarchyView]);
 
   const handleScrapePapers = async () => {
     try {
@@ -406,9 +419,24 @@ const App: React.FC = () => {
   const allFocusAreas = labs.flatMap(lab => lab.focus_areas || []);
   const focusAreas = Array.from(new Set(allFocusAreas)).sort();
 
+  // Group labs by institution if groupByInstitution is enabled
+  const groupLabsByInstitution = (labs: Lab[]) => {
+    const grouped = labs.reduce((acc, lab) => {
+      const institution = lab.institution;
+      if (!acc[institution]) {
+        acc[institution] = [];
+      }
+      acc[institution].push(lab);
+      return acc;
+    }, {} as Record<string, Lab[]>);
+    
+    return Object.entries(grouped).sort((a, b) => b[1].length - a[1].length); // Sort by number of labs
+  };
+
   // Get labs for current page
   const startIndex = (currentPage - 1) * pageSize;
   const currentLabs = filteredLabs.slice(startIndex, startIndex + pageSize);
+  const institutionGroups = groupByInstitution ? groupLabsByInstitution(filteredLabs) : [];
 
   return (
     <Layout className="app-layout">
@@ -555,7 +583,10 @@ const App: React.FC = () => {
             
             <Col span={24}>
               <Card 
-                title={`Research Labs (${filteredLabs.length} results)`} 
+                title={groupByInstitution 
+                  ? `Research Labs - ${institutionGroups.length} institutions (${filteredLabs.length} total labs)` 
+                  : `Research Labs (${filteredLabs.length} results)`
+                } 
                 loading={loading}
                 extra={
                   <Space size="large">
@@ -569,17 +600,37 @@ const App: React.FC = () => {
                       />
                       <BarsOutlined />
                     </Space>
-                    <Pagination
-                      current={currentPage}
-                      total={filteredLabs.length}
-                      pageSize={pageSize}
-                      onChange={setCurrentPage}
-                      showSizeChanger={false}
-                      showQuickJumper
-                      showTotal={(total, range) => 
-                        `${range[0]}-${range[1]} of ${total} labs`
-                      }
-                    />
+                    <Space>
+                      <GlobalOutlined />
+                      <Switch
+                        checked={hierarchyView}
+                        onChange={(checked) => setHierarchyView(checked)}
+                        checkedChildren="Hierarchy"
+                        unCheckedChildren="Flat"
+                      />
+                    </Space>
+                    <Space>
+                      <UserOutlined />
+                      <Switch
+                        checked={groupByInstitution}
+                        onChange={(checked) => setGroupByInstitution(checked)}
+                        checkedChildren="Grouped"
+                        unCheckedChildren="Mixed"
+                      />
+                    </Space>
+                    {!groupByInstitution && (
+                      <Pagination
+                        current={currentPage}
+                        total={filteredLabs.length}
+                        pageSize={pageSize}
+                        onChange={setCurrentPage}
+                        showSizeChanger={false}
+                        showQuickJumper
+                        showTotal={(total, range) => 
+                          `${range[0]}-${range[1]} of ${total} labs`
+                        }
+                      />
+                    )}
                   </Space>
                 }
               >
@@ -587,7 +638,92 @@ const App: React.FC = () => {
                   <Alert message={error} type="error" />
                 ) : (
                   <div>
-                    {viewMode === 'cards' ? (
+                    {groupByInstitution ? (
+                      // Institution Grouped View
+                      <div>
+                        {institutionGroups.map(([institution, labs]) => (
+                          <Card 
+                            key={institution}
+                            title={
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                                  {institution}
+                                </span>
+                                <Tag color="blue">{labs.length} labs</Tag>
+                              </div>
+                            }
+                            style={{ marginBottom: 16 }}
+                            size="small"
+                          >
+                            <Row gutter={[16, 16]}>
+                              {labs.map((lab) => (
+                                <Col span={8} key={lab.id}>
+                                  <Card 
+                                    size="small" 
+                                    title={
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                          <Avatar style={{ backgroundColor: '#1890ff' }}>
+                                            {lab.name.charAt(0)}
+                                          </Avatar>
+                                          <span style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                                            {lab.name.length > 30 ? lab.name.substring(0, 30) + '...' : lab.name}
+                                          </span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                          {lab.paper_count && lab.paper_count > 0 && (
+                                            <Tag color="green">{lab.paper_count} papers</Tag>
+                                          )}
+                                          <Button 
+                                            type="text" 
+                                            size="small"
+                                            icon={<ExpandAltOutlined />}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedLab(lab);
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                    }
+                                    hoverable
+                                    onClick={() => setSelectedLab(lab)}
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <div style={{ marginBottom: 8 }}>
+                                      <strong>PI:</strong> {lab.pi}
+                                    </div>
+                                    <div style={{ marginBottom: 8 }}>
+                                      <strong>Location:</strong> {lab.city}, {lab.country}
+                                    </div>
+                                    {lab.focus_areas && lab.focus_areas.length > 0 && (
+                                      <div style={{ marginBottom: 8 }}>
+                                        <strong>Focus Areas:</strong>
+                                        <div style={{ marginTop: 4 }}>
+                                          {lab.focus_areas.slice(0, 3).map((area, index) => (
+                                            <Tag key={index} style={{ marginBottom: 2, fontSize: '12px' }}>
+                                              {area}
+                                            </Tag>
+                                          ))}
+                                          {lab.focus_areas.length > 3 && (
+                                            <Tag style={{ marginBottom: 2, fontSize: '12px' }}>
+                                              +{lab.focus_areas.length - 3} more
+                                            </Tag>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </Card>
+                                </Col>
+                              ))}
+                            </Row>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      // Normal View (non-grouped)
+                      <>
+                        {viewMode === 'cards' ? (
                       // Card View
                       <Row gutter={[16, 16]}>
                         {currentLabs.map((lab) => {
@@ -812,6 +948,11 @@ const App: React.FC = () => {
                                         />
                                       </Card>
                                     )}
+                                    
+                                    <ResearchGroupManager 
+                                      lab={lab} 
+                                      onGroupCreated={loadLabs}
+                                    />
                                   </div>
                                 ) : (
                                   // Collapsed view
@@ -1101,6 +1242,8 @@ const App: React.FC = () => {
                         <Title level={4}>No labs found</Title>
                         <Paragraph>Try adjusting your search criteria</Paragraph>
                       </div>
+                    )}
+                      </>
                     )}
                   </div>
                 )}

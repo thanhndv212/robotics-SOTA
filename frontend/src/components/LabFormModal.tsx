@@ -21,15 +21,22 @@ interface Lab {
   name: string;
   pi: string;
   institution: string;
-  city: string;
-  country: string;
-  focus_areas?: string[];
-  website?: string;
+  city?: string;
+  country?: string;
   latitude?: number;
   longitude?: number;
+  focus_areas?: string[];
+  website?: string;
+  description?: string;
   established_year?: number;
   funding_sources?: string[];
-  description?: string;
+  papers?: any[];
+  paper_count?: number;
+  lab_type?: string;
+  parent_lab_id?: number;
+  parent_lab?: string;
+  sub_groups?: Lab[];
+  sub_groups_count?: number;
 }
 
 interface LabFormModalProps {
