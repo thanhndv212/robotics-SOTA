@@ -22,9 +22,25 @@ class Lab(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Hierarchical fields
+    parent_lab_id = db.Column(
+        db.Integer,
+        db.ForeignKey('labs.id'),
+        nullable=True
+    )
+    lab_type = db.Column(
+        db.String(50),
+        default='independent'
+    )  # 'independent', 'group', 'department'
+    
     # Relationships
     papers = db.relationship('Paper', backref='lab', lazy=True)
     researchers = db.relationship('Researcher', backref='lab', lazy=True)
+    sub_groups = db.relationship(
+        'Lab',
+        backref=db.backref('parent_lab', remote_side=[id]),
+        lazy='dynamic'
+    )
     
     @property
     def focus_areas_list(self):
@@ -62,7 +78,7 @@ class Lab(db.Model):
         else:
             self.funding_sources = None
     
-    def to_dict(self, include_papers=False):
+    def to_dict(self, include_papers=False, include_sub_groups=False):
         result = {
             'id': self.id,
             'name': self.name,
@@ -77,13 +93,26 @@ class Lab(db.Model):
             'description': self.description,
             'established_year': self.established_year,
             'funding_sources': self.funding_sources_list,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'lab_type': self.lab_type,
+            'parent_lab': self.parent_lab.name if self.parent_lab else None,
+            'parent_lab_id': self.parent_lab_id,
+            'created_at': (
+                self.created_at.isoformat() if self.created_at else None
+            ),
+            'updated_at': (
+                self.updated_at.isoformat() if self.updated_at else None
+            )
         }
         
         if include_papers:
             result['papers'] = [paper.to_dict() for paper in self.papers]
             result['paper_count'] = len(self.papers)
+        
+        if include_sub_groups:
+            result['sub_groups'] = [
+                group.to_dict() for group in self.sub_groups
+            ]
+            result['sub_groups_count'] = self.sub_groups.count()
         
         return result
 

@@ -11,16 +11,25 @@ labs_bp = Blueprint('labs', __name__)
 
 @labs_bp.route('/', methods=['GET'])
 def get_labs():
-    """Get all labs with optional filtering"""
+    """Get all labs with optional filtering and hierarchical support"""
     try:
         # Get query parameters
         country = request.args.get('country')
         focus_area = request.args.get('focus_area')
         search = request.args.get('search')
-        include_papers = request.args.get('include_papers', 'false').lower() == 'true'
+        include_papers = request.args.get(
+            'include_papers', 'false'
+        ).lower() == 'true'
+        include_sub_groups = request.args.get(
+            'include_sub_groups', 'false'
+        ).lower() == 'true'
+        lab_type = request.args.get('type', None)  # independent/group/department
         
         # Build query
         query = Lab.query
+        
+        if lab_type:
+            query = query.filter(Lab.lab_type == lab_type)
         
         if country:
             query = query.filter(Lab.country == country)
@@ -38,7 +47,12 @@ def get_labs():
             )
         
         labs = query.all()
-        return jsonify([lab.to_dict(include_papers=include_papers) for lab in labs])
+        return jsonify([
+            lab.to_dict(
+                include_papers=include_papers,
+                include_sub_groups=include_sub_groups
+            ) for lab in labs
+        ])
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -272,6 +286,121 @@ def scrape_papers():
             'message': 'Paper scraping completed',
             'results': results,
             'status': 'completed'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@labs_bp.route('/<int:lab_id>/groups', methods=['GET'])
+def get_lab_research_groups(lab_id):
+    """Get all research groups within a lab"""
+    try:
+        lab = Lab.query.get_or_404(lab_id)
+        groups = lab.sub_groups.all()
+        
+        return jsonify({
+            'parent_lab': lab.to_dict(include_papers=True),
+            'research_groups': [
+                group.to_dict(include_papers=True) for group in groups
+            ],
+            'total_groups': len(groups)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@labs_bp.route('/<int:lab_id>/groups', methods=['POST'])
+def create_research_group(lab_id):
+    """Create a new research group within a lab"""
+    try:
+        parent_lab = Lab.query.get_or_404(lab_id)
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['name', 'pi']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    'error': f'Missing required field: {field}'
+                }), 400
+        
+        # Create new research group
+        group = Lab(
+            name=data['name'],
+            pi=data['pi'],
+            institution=parent_lab.institution,
+            city=parent_lab.city,
+            country=parent_lab.country,
+            latitude=parent_lab.latitude,
+            longitude=parent_lab.longitude,
+            website=data.get('website', ''),
+            description=data.get('description', ''),
+            parent_lab_id=lab_id,
+            lab_type='group'
+        )
+        
+        # Set focus areas and funding sources
+        if 'focus_areas' in data:
+            group.focus_areas_list = data['focus_areas']
+        if 'funding_sources' in data:
+            group.funding_sources_list = data['funding_sources']
+        
+        db.session.add(group)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Research group created successfully',
+            'group': group.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@labs_bp.route('/hierarchy', methods=['GET'])
+def get_labs_hierarchy():
+    """Get labs organized by hierarchy (departments -> groups)"""
+    try:
+        include_papers = request.args.get(
+            'include_papers', 'false'
+        ).lower() == 'true'
+        
+        # Get all independent labs and departments
+        top_level_labs = Lab.query.filter(
+            (Lab.lab_type == 'independent') | (Lab.lab_type == 'department')
+        ).all()
+        
+        hierarchy = []
+        
+        for lab in top_level_labs:
+            lab_data = lab.to_dict(
+                include_papers=include_papers,
+                include_sub_groups=True
+            )
+            
+            if lab.lab_type == 'department':
+                # Get research groups with their papers
+                groups = lab.sub_groups.all()
+                lab_data['research_groups'] = [
+                    group.to_dict(include_papers=include_papers) 
+                    for group in groups
+                ]
+                lab_data['total_groups'] = len(groups)
+                lab_data['total_papers'] = sum(
+                    len(group.papers) for group in groups
+                )
+            
+            hierarchy.append(lab_data)
+        
+        return jsonify({
+            'labs': hierarchy,
+            'total_institutions': len(hierarchy),
+            'total_groups': sum(
+                len(lab.get('research_groups', [])) for lab in hierarchy
+            )
         })
         
     except Exception as e:
