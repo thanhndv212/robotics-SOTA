@@ -48,6 +48,7 @@ import {
   DollarOutlined
 } from '@ant-design/icons';
 import LabFormModal from './components/LabFormModal';
+import PaperFormModal from './components/PaperFormModal';
 import ResearchGroupManager from './components/ResearchGroupManager';
 import './App.css';
 
@@ -109,31 +110,33 @@ const App: React.FC = () => {
   const [scrapingInProgress, setScrapingInProgress] = useState(false);
   const [maxPapersToScrape, setMaxPapersToScrape] = useState<number>(5);
   const [institutionalPapers, setInstitutionalPapers] = useState<any[]>([]);
+  
+  // Paper form modal state
+  const [paperModalVisible, setPaperModalVisible] = useState(false);
+  const [paperModalMode, setPaperModalMode] = useState<'create' | 'edit'>('create');
+  const [editingPaper, setEditingPaper] = useState<any>(null);
+  const [selectedLabId, setSelectedLabId] = useState<number | null>(null);
   const [showInstitutionalScrapeModal, setShowInstitutionalScrapeModal] = useState(false);
   const [labFormVisible, setLabFormVisible] = useState(false);
   const [currentLab, setCurrentLab] = useState<Lab | null>(null);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
-  const [hierarchyView, setHierarchyView] = useState(false);
   const [groupByInstitution, setGroupByInstitution] = useState(false);
   const pageSize = 12;
 
   const loadLabs = async () => {
     try {
       setLoading(true);
-      const url = hierarchyView 
-        ? 'http://127.0.0.1:8080/api/labs/hierarchy?include_papers=true'
-        : 'http://127.0.0.1:8080/api/labs/?include_papers=true&include_sub_groups=true';
+      const url = 'http://127.0.0.1:8080/api/labs/?include_papers=true&include_sub_groups=true';
       
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      const labsData = hierarchyView ? data.labs : data;
-      console.log('Loaded labs:', labsData.length);
-      setLabs(labsData);
-      setFilteredLabs(labsData);
+      console.log('Loaded labs:', data.length);
+      setLabs(data);
+      setFilteredLabs(data);
       setError(null);
     } catch (err) {
       setError('Failed to load robotics labs data');
@@ -145,7 +148,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     loadLabs();
-  }, [hierarchyView]);
+  }, []);
 
   const handleScrapePapers = async () => {
     try {
@@ -226,6 +229,59 @@ const App: React.FC = () => {
     } finally {
       setScrapingInProgress(false);
     }
+  };
+
+  // Paper management functions
+  const handleAddPaper = (labId: number) => {
+    setSelectedLabId(labId);
+    setPaperModalMode('create');
+    setEditingPaper(null);
+    setPaperModalVisible(true);
+  };
+
+  const handleEditPaper = (paper: any) => {
+    setSelectedLabId(paper.lab_id);
+    setPaperModalMode('edit');
+    setEditingPaper(paper);
+    setPaperModalVisible(true);
+  };
+
+  const handleDeletePaper = async (paperId: number) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8080/api/papers/${paperId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        message.success('Paper deleted successfully');
+        // Reload labs data to refresh papers
+        const labsResponse = await fetch('http://127.0.0.1:8080/api/labs/?include_papers=true&include_sub_groups=true');
+        const labsData = await labsResponse.json();
+        setLabs(labsData);
+      } else {
+        throw new Error('Failed to delete paper');
+      }
+    } catch (error) {
+      console.error('Error deleting paper:', error);
+      message.error('Failed to delete paper');
+    }
+  };
+
+  const handlePaperModalSuccess = async () => {
+    setPaperModalVisible(false);
+    setEditingPaper(null);
+    setSelectedLabId(null);
+    
+    // Reload labs data to show updated papers
+    const labsResponse = await fetch('http://127.0.0.1:8080/api/labs/?include_papers=true&include_sub_groups=true');
+    const labsData = await labsResponse.json();
+    setLabs(labsData);
+  };
+
+  const handlePaperModalCancel = () => {
+    setPaperModalVisible(false);
+    setEditingPaper(null);
+    setSelectedLabId(null);
   };
 
   const handleCreateLab = () => {
@@ -656,15 +712,6 @@ const App: React.FC = () => {
                       <BarsOutlined />
                     </Space>
                     <Space>
-                      <GlobalOutlined />
-                      <Switch
-                        checked={hierarchyView}
-                        onChange={(checked) => setHierarchyView(checked)}
-                        checkedChildren="Hierarchy"
-                        unCheckedChildren="Flat"
-                      />
-                    </Space>
-                    <Space>
                       <UserOutlined />
                       <Switch
                         checked={groupByInstitution}
@@ -819,7 +866,24 @@ const App: React.FC = () => {
                                           </Row>
                                           
                                           {lab.papers && lab.papers.length > 0 && (
-                                            <Card title={`Recent Papers (${lab.papers.length})`} style={{ marginTop: 16 }} size="small">
+                                            <Card 
+                                              title={`Recent Papers (${lab.papers.length})`}
+                                              extra={
+                                                <Button 
+                                                  type="primary" 
+                                                  size="small" 
+                                                  icon={<PlusOutlined />}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleAddPaper(lab.id);
+                                                  }}
+                                                >
+                                                  Add Paper
+                                                </Button>
+                                              }
+                                              style={{ marginTop: 16 }} 
+                                              size="small"
+                                            >
                                               <List
                                                 itemLayout="vertical"
                                                 dataSource={lab.papers}
@@ -848,7 +912,32 @@ const App: React.FC = () => {
                                                         >
                                                           ArXiv
                                                         </Button>
-                                                      )
+                                                      ),
+                                                      <Button 
+                                                        type="link" 
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleEditPaper(paper);
+                                                        }}
+                                                        icon={<EditOutlined />}
+                                                      >
+                                                        Edit
+                                                      </Button>,
+                                                      <Button 
+                                                        type="link" 
+                                                        danger
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          Modal.confirm({
+                                                            title: 'Delete Paper',
+                                                            content: `Are you sure you want to delete "${paper.title}"?`,
+                                                            onOk: () => handleDeletePaper(paper.id),
+                                                          });
+                                                        }}
+                                                        icon={<DeleteOutlined />}
+                                                      >
+                                                        Delete
+                                                      </Button>
                                                     ].filter(Boolean)}
                                                   >
                                                     <List.Item.Meta
@@ -883,6 +972,31 @@ const App: React.FC = () => {
                                                   </List.Item>
                                                 )}
                                               />
+                                            </Card>
+                                          )}
+                                          
+                                          {(!lab.papers || lab.papers.length === 0) && (
+                                            <Card 
+                                              title="Papers"
+                                              extra={
+                                                <Button 
+                                                  type="primary" 
+                                                  size="small" 
+                                                  icon={<PlusOutlined />}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleAddPaper(lab.id);
+                                                  }}
+                                                >
+                                                  Add First Paper
+                                                </Button>
+                                              }
+                                              style={{ marginTop: 16 }} 
+                                              size="small"
+                                            >
+                                              <p style={{ color: '#666', textAlign: 'center', margin: 16 }}>
+                                                No papers yet. Click "Add First Paper" to get started.
+                                              </p>
                                             </Card>
                                           )}
                                           
@@ -1093,7 +1207,24 @@ const App: React.FC = () => {
                                     </Row>
                                     
                                     {lab.papers && lab.papers.length > 0 && (
-                                      <Card title={`Recent Papers (${lab.papers.length})`} style={{ marginTop: 16 }} size="small">
+                                      <Card 
+                                        title={`Recent Papers (${lab.papers.length})`}
+                                        extra={
+                                          <Button 
+                                            type="primary" 
+                                            size="small" 
+                                            icon={<PlusOutlined />}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleAddPaper(lab.id);
+                                            }}
+                                          >
+                                            Add Paper
+                                          </Button>
+                                        }
+                                        style={{ marginTop: 16 }} 
+                                        size="small"
+                                      >
                                         <List
                                           itemLayout="vertical"
                                           dataSource={lab.papers}
@@ -1122,7 +1253,32 @@ const App: React.FC = () => {
                                                   >
                                                     ArXiv
                                                   </Button>
-                                                )
+                                                ),
+                                                <Button 
+                                                  type="link" 
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditPaper(paper);
+                                                  }}
+                                                  icon={<EditOutlined />}
+                                                >
+                                                  Edit
+                                                </Button>,
+                                                <Button 
+                                                  type="link" 
+                                                  danger
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    Modal.confirm({
+                                                      title: 'Delete Paper',
+                                                      content: `Are you sure you want to delete "${paper.title}"?`,
+                                                      onOk: () => handleDeletePaper(paper.id),
+                                                    });
+                                                  }}
+                                                  icon={<DeleteOutlined />}
+                                                >
+                                                  Delete
+                                                </Button>
                                               ].filter(Boolean)}
                                             >
                                               <List.Item.Meta
@@ -1157,6 +1313,31 @@ const App: React.FC = () => {
                                             </List.Item>
                                           )}
                                         />
+                                      </Card>
+                                    )}
+                                    
+                                    {(!lab.papers || lab.papers.length === 0) && (
+                                      <Card 
+                                        title="Papers"
+                                        extra={
+                                          <Button 
+                                            type="primary" 
+                                            size="small" 
+                                            icon={<PlusOutlined />}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleAddPaper(lab.id);
+                                            }}
+                                          >
+                                            Add First Paper
+                                          </Button>
+                                        }
+                                        style={{ marginTop: 16 }} 
+                                        size="small"
+                                      >
+                                        <p style={{ color: '#666', textAlign: 'center', margin: 16 }}>
+                                          No papers yet. Click "Add First Paper" to get started.
+                                        </p>
                                       </Card>
                                     )}
                                     
@@ -1432,7 +1613,24 @@ const App: React.FC = () => {
                               </Row>
                               
                               {record.papers && record.papers.length > 0 && (
-                                <Card title={`Recent Papers (${record.papers.length})`} style={{ marginTop: 16 }} size="small">
+                                <Card 
+                                  title={`Recent Papers (${record.papers.length})`}
+                                  extra={
+                                    <Button 
+                                      type="primary" 
+                                      size="small" 
+                                      icon={<PlusOutlined />}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddPaper(record.id);
+                                      }}
+                                    >
+                                      Add Paper
+                                    </Button>
+                                  }
+                                  style={{ marginTop: 16 }} 
+                                  size="small"
+                                >
                                   <List
                                     itemLayout="vertical"
                                     dataSource={record.papers}
@@ -1459,7 +1657,32 @@ const App: React.FC = () => {
                                             >
                                               ArXiv
                                             </Button>
-                                          )
+                                          ),
+                                          <Button 
+                                            type="link" 
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleEditPaper(paper);
+                                            }}
+                                            icon={<EditOutlined />}
+                                          >
+                                            Edit
+                                          </Button>,
+                                          <Button 
+                                            type="link" 
+                                            danger
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              Modal.confirm({
+                                                title: 'Delete Paper',
+                                                content: `Are you sure you want to delete "${paper.title}"?`,
+                                                onOk: () => handleDeletePaper(paper.id),
+                                              });
+                                            }}
+                                            icon={<DeleteOutlined />}
+                                          >
+                                            Delete
+                                          </Button>
                                         ].filter(Boolean)}
                                       >
                                         <List.Item.Meta
@@ -1494,6 +1717,31 @@ const App: React.FC = () => {
                                       </List.Item>
                                     )}
                                   />
+                                </Card>
+                              )}
+                              
+                              {(!record.papers || record.papers.length === 0) && (
+                                <Card 
+                                  title="Papers"
+                                  extra={
+                                    <Button 
+                                      type="primary" 
+                                      size="small" 
+                                      icon={<PlusOutlined />}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddPaper(record.id);
+                                      }}
+                                    >
+                                      Add First Paper
+                                    </Button>
+                                  }
+                                  style={{ marginTop: 16 }} 
+                                  size="small"
+                                >
+                                  <p style={{ color: '#666', textAlign: 'center', margin: 16 }}>
+                                    No papers yet. Click "Add First Paper" to get started.
+                                  </p>
                                 </Card>
                               )}
                             </div>
@@ -1670,6 +1918,15 @@ const App: React.FC = () => {
         onSuccess={handleLabFormSuccess}
         lab={currentLab}
         mode={formMode}
+      />
+
+      <PaperFormModal
+        visible={paperModalVisible}
+        onCancel={handlePaperModalCancel}
+        onSuccess={handlePaperModalSuccess}
+        paper={editingPaper}
+        mode={paperModalMode}
+        labId={selectedLabId || 0}
       />
     </Layout>
   );
