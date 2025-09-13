@@ -6,7 +6,7 @@ MIT Robot Locomotion & Learning,Russ Tedrake,MIT,Cambridge,USA,Learning + contro
 GRASP / Robot Learning teams,Multiple (e.g. Kostas Daniilidis),University of Pennsylvania,Philadelphia,USA,"Manipulation, perception-to-control learning, dexterous robotics",https://www.grasp.upenn.edu/
 Robot Learning & Interaction Lab,Siddhartha Srinivasa,University of Washington,Seattle,USA,"Manipulation, perception, planning integrated with learning for home robots",http://personalrobotics.cs.washington.edu/
 RobIn Lab (Robot Interactive Intelligence),Roberto Martín-Martín,UT Austin,Austin,USA,"Embodied perception, interactive manipulation, representation learning",https://robin-lab.cs.utexas.edu/
-CMU Robotics Institute — Robot Learning groups,Multiple PIs,Carnegie Mellon University,Pittsburgh,USA,"Dexterous manipulation, learning for autonomy, perception + control",https://www.ri.cmu.edu/
+CMU Robotics Institute — Robot Learning groups,Multiple Research Groups,Carnegie Mellon University,Pittsburgh,USA,"Dexterous manipulation, learning for autonomy, perception + control",https://www.ri.cmu.edu/
 Northeastern Lab for Learning & Planning in Robotics,Multiple PIs,Northeastern University,Boston,USA,"Learning & planning integration, HRI, real-time learning",https://www.khoury.northeastern.edu/research_areas/robotics/
 Oxford Robotics & AI groups,Multiple PIs,University of Oxford,Oxford,UK,"Embodied AI, sim2real, perception-guided robot learning",https://ori.ox.ac.uk/
 EPFL Learning Algorithms & Systems Lab,Aude Billard,EPFL,Lausanne,Switzerland,"Robot learning for manipulation, HRI, adaptive control",https://www.epfl.ch/labs/las/
@@ -23,10 +23,9 @@ Tokyo Institute of Technology — Robot Learning,Multiple PIs,Tokyo Tech,Tokyo,J
 Georgia Tech IRIM / Robotarium,Magnus Egerstedt,Georgia Institute of Technology,Atlanta,USA,"Multi-robot learning, distributed control, Robotarium testbed",https://robotarium.gatech.edu/
 University of Cambridge — Robot Learning & Active Vision,Multiple PIs,University of Cambridge,Cambridge,UK,"Active perception, robot learning for navigation & inspection",https://www.cam.ac.uk/research/robotics
 UIUC Robotics / Robot Learning,Multiple PIs,University of Illinois Urbana-Champaign,Urbana-Champaign,USA,"Robot learning for manipulation, perception, HRI",https://robotics.illinois.edu/
-Human-Robot Empowerment Lab (HRELab),Laura Hallock,University of Utah,Salt Lake City,USA,"Assistive & rehabilitative robotics, personalized robot learning",https://hrelab.utah.edu/
 AUTOLAB (Automation Lab),Ken Goldberg,UC Berkeley,Berkeley,USA,"Robot learning for manipulation, grasping, cloud robotics",https://autolab.berkeley.edu/
 InterACT Lab,Anca Dragan,UC Berkeley,Berkeley,USA,"Human-aware robot learning, safe HRI, intent inference",https://interact.berkeley.edu/
-CMU Robotics & AI (Bagnell Lab),J. Andrew Bagnell,CMU,Pittsburgh,USA,"Imitation learning, perception-for-control, applied autonomy",https://www.cmu.edu/ri/
+Robotics & AI Lab (Bagnell Lab),J. Andrew Bagnell,Carnegie Mellon University,Pittsburgh,USA,"Imitation learning, perception-for-control, applied autonomy",https://www.cmu.edu/ri/
 Robotics and Perception Group,Davide Scaramuzza,University of Zurich,Zurich,Switzerland,Vision-based learning for aerial robots and agile navigation,http://rpg.ifi.uzh.ch/
 Caltech Robotics & Vision Learning Lab,Pietro Perona (affiliated),Caltech,Pasadena,USA,Visual learning for manipulation and perception-driven policies,https://www.caltech.edu/academics/areas-of-study/robotics
 MIT Distributed Robotics Lab,Daniela Rus,MIT,Cambridge,USA,"Multi-robot learning, distributed control, swarm robotics",https://groups.csail.mit.edu/drl/
@@ -48,66 +47,105 @@ University of Michigan Robotics — Robot Learning,Multiple PIs,University of Mi
 Brown Robotics Lab,Multiple PIs,Brown University,Providence,USA,"Human-robot interaction, robot learning for assistive systems",https://robotics.brown.edu/
 Cornell Robotics & Vision Lab,Multiple PIs,Cornell University,Ithaca,USA,"Perception-driven robot learning, manipulation research",https://www.cornell.edu/research/robotics/
 Harvard Robotics Lab,Multiple PIs,Harvard University,Cambridge,USA,"ML + robotics for soft, medical, and small-scale robots",https://robotics.harvard.edu/
-Florida Institute for Human & Machine Cognition (IHMC),Multiple PIs,IHMC,Pensacola,USA,"Human-machine teaming, robust control + learning for legged/wearable robots",https://www.ihmc.us/
-Robot Learning Lab (IRI),Carme Torras,Technical University of Catalonia (UPC),Barcelona,Spain,"Manipulation learning, dexterous robotics, perception-action integration",https://www.iri.upc.edu/
-LaRAA - Learning and Adaptive Robotics,Lorenzo Natale,Italian Institute of Technology (IIT),Genoa,Italy,"Humanoid robotics, adaptive control, learning-based manipulation",https://www.iit.it/
-TUM Robot Learning Lab,Angela Schoellig,Technical University of Munich,Munich,Germany,"Aerial robotics, learning-based control, multi-robot systems",https://www.tum.de/
-KTH Robotics Lab,Danica Kragic,KTH Royal Institute of Technology,Stockholm,Sweden,"Vision-based manipulation, human-robot interaction, adaptive systems",https://www.kth.se/
-IDSIA Robotics,Juergen Schmidhuber,University of Lugano (USI),Lugano,Switzerland,"AI for robotics, neural networks for control, autonomous systems",https://www.idsia.ch/
-LAAS-CNRS Robotics,Multiple PIs,LAAS-CNRS,Toulouse,France,"Mobile robotics, manipulation, multi-robot coordination",https://www.laas.fr/
-INRIA Robotics Teams,Multiple PIs,INRIA,Multiple Cities,France,"Learning algorithms, autonomous navigation, human-robot interaction",https://www.inria.fr/
-Aalto Robotics Lab,Ville Kyrki,Aalto University,Espoo,Finland,"Machine learning for robotics, manipulation, human-robot collaboration",https://www.aalto.fi/
-University of Edinburgh Robotics,Multiple PIs,University of Edinburgh,Edinburgh,UK,"Cognitive robotics, learning systems, autonomous agents",https://www.ed.ac.uk/
-Bristol Robotics Laboratory,Multiple PIs,University of Bristol & UWE Bristol,Bristol,UK,"Bio-inspired robotics, swarm systems, autonomous robots",https://www.brl.ac.uk/
-Robotics Institute of Beihang University,Multiple PIs,Beihang University,Beijing,China,"Aerospace robotics, autonomous systems, intelligent control",https://www.buaa.edu.cn/
-Harbin Institute of Technology Robotics,Multiple PIs,Harbin Institute of Technology,Harbin,China,"Space robotics, manipulation systems, intelligent robots",http://www.hit.edu.cn/
-Zhejiang University Robotics,Multiple PIs,Zhejiang University,Hangzhou,China,"Service robotics, human-robot interaction, autonomous systems",http://www.zju.edu.cn/
-Chinese Academy of Sciences IA,Multiple PIs,Institute of Automation CAS,Beijing,China,"Pattern recognition, robot vision, autonomous systems",http://www.ia.cas.cn/
-Waseda University Robotics,Multiple PIs,Waseda University,Tokyo,Japan,"Humanoid robotics, bipedal locomotion, human-robot interaction",https://www.waseda.jp/
-Osaka University Robotics,Multiple PIs,Osaka University,Osaka,Japan,"Medical robotics, rehabilitation systems, human-machine interfaces",https://www.osaka-u.ac.jp/
-AIST Robotics,Multiple PIs,National Institute of Advanced Industrial Science and Technology,Tsukuba,Japan,"Industrial robotics, service robots, human-robot collaboration",https://www.aist.go.jp/
-Tohoku University Robotics,Multiple PIs,Tohoku University,Sendai,Japan,"Disaster response robotics, field robotics, autonomous systems",https://www.tohoku.ac.jp/
-University of Toronto Robotics,Multiple PIs,University of Toronto,Toronto,Canada,"Computer vision for robotics, autonomous driving, robot perception",https://www.utoronto.ca/
-McGill University Robotics,Multiple PIs,McGill University,Montreal,Canada,"Mobile robotics, field robotics, autonomous navigation",https://www.mcgill.ca/
-University of British Columbia Robotics,Multiple PIs,University of British Columbia,Vancouver,Canada,"Human-robot interaction, assistive robotics, machine learning",https://www.ubc.ca/
-Vector Institute Robotics Research,Multiple PIs,Vector Institute,Toronto,Canada,"AI for robotics, deep learning applications, autonomous systems",https://vectorinstitute.ai/
-Australian Centre for Robotic Vision,Multiple PIs,Queensland University of Technology,Brisbane,Australia,"Computer vision, agricultural robotics, autonomous systems",https://www.roboticvision.org/
-University of Sydney Robotics,Multiple PIs,University of Sydney,Sydney,Australia,"Field robotics, autonomous systems, agricultural automation",https://www.sydney.edu.au/
-CSIRO Robotics,Multiple PIs,Commonwealth Scientific and Industrial Research Organisation,Multiple Cities,Australia,"Mining robotics, agricultural automation, autonomous systems",https://www.csiro.au/
-Monash Robotics,Multiple PIs,Monash University,Melbourne,Australia,"Medical robotics, soft robotics, human-robot interaction",https://www.monash.edu/
-TU Delft Robotics Institute,Multiple PIs,Delft University of Technology,Delft,Netherlands,"Aerial robotics, autonomous systems, cognitive robotics",https://www.tudelft.nl/
-University of Twente Robotics,Multiple PIs,University of Twente,Enschede,Netherlands,"Medical robotics, surgical systems, rehabilitation robotics",https://www.utwente.nl/
-RWTH Aachen Robotics,Multiple PIs,RWTH Aachen University,Aachen,Germany,"Manufacturing robotics, automation systems, intelligent robots",https://www.rwth-aachen.de/
-Technical University of Berlin Robotics,Multiple PIs,Technical University of Berlin,Berlin,Germany,"Service robotics, human-robot interaction, autonomous systems",https://www.tu-berlin.de/
-University of Freiburg Robotics,Multiple PIs,University of Freiburg,Freiburg,Germany,"Mobile robotics, SLAM, autonomous navigation",https://www.uni-freiburg.de/
-Karlsruhe Institute of Technology Robotics,Multiple PIs,Karlsruhe Institute of Technology,Karlsruhe,Germany,"Humanoid robotics, manipulation systems, cognitive robotics",https://www.kit.edu/
-Sapienza University Robotics,Multiple PIs,Sapienza University of Rome,Rome,Italy,"Social robotics, cognitive systems, human-robot interaction",https://www.uniroma1.it/
-University of Pisa Robotics,Multiple PIs,University of Pisa,Pisa,Italy,"Soft robotics, bio-inspired systems, manipulation",https://www.unipi.it/
-Politecnico di Milano Robotics,Multiple PIs,Politecnico di Milano,Milan,Italy,"Industrial robotics, automation, intelligent manufacturing",https://www.polimi.it/
-IRISA Robotics,Multiple PIs,IRISA,Rennes,France,"Autonomous robots, computer vision, machine learning",https://www.irisa.fr/
-University of Grenoble Robotics,Multiple PIs,University of Grenoble,Grenoble,France,"Robotics control, autonomous systems, human-robot interaction",https://www.univ-grenoble-alpes.fr/
-Sorbonne University Robotics,Multiple PIs,Sorbonne University,Paris,France,"Underwater robotics, field robotics, autonomous systems",https://www.sorbonne-universite.fr/
-IST Austria Robotics,Multiple PIs,Institute of Science and Technology Austria,Klosterneuburg,Austria,"Swarm robotics, collective intelligence, multi-robot systems",https://ist.ac.at/
-Czech Technical University Robotics,Multiple PIs,Czech Technical University,Prague,Czech Republic,"Field robotics, autonomous navigation, mobile manipulation",https://www.cvut.cz/
-AGH University Robotics,Multiple PIs,AGH University of Science and Technology,Krakow,Poland,"Mining robotics, underground automation, autonomous systems",https://www.agh.edu.pl/
-Indian Institute of Science Robotics,Multiple PIs,Indian Institute of Science,Bangalore,India,"Robotics research, autonomous systems, AI applications",https://www.iisc.ac.in/
-IIT Bombay Robotics,Multiple PIs,Indian Institute of Technology Bombay,Mumbai,India,"Manufacturing robotics, automation, intelligent systems",https://www.iitb.ac.in/
-IIT Delhi Robotics,Multiple PIs,Indian Institute of Technology Delhi,New Delhi,India,"Service robotics, healthcare applications, human-robot interaction",https://www.iitd.ac.in/
-IIT Madras Robotics,Multiple PIs,Indian Institute of Technology Madras,Chennai,India,"Bio-medical robotics, rehabilitation systems, assistive technology",https://www.iitm.ac.in/
-IIT Kanpur Robotics,Multiple PIs,Indian Institute of Technology Kanpur,Kanpur,India,"Autonomous vehicles, mobile robotics, control systems",https://www.iitk.ac.in/
-IIIT Hyderabad Robotics,Multiple PIs,International Institute of Information Technology Hyderabad,Hyderabad,India,"Computer vision for robotics, autonomous systems, AI applications",https://www.iiit.ac.in/
-National University of Singapore Robotics,Multiple PIs,National University of Singapore,Singapore,Singapore,"Medical robotics, autonomous systems, human-robot interaction",https://www.nus.edu.sg/
-Hong Kong University of Science and Technology Robotics,Multiple PIs,Hong Kong University of Science and Technology,Hong Kong,Hong Kong,"Autonomous systems, computer vision, intelligent robots",https://www.ust.hk/
-Chinese University of Hong Kong Robotics,Multiple PIs,Chinese University of Hong Kong,Hong Kong,Hong Kong,"Medical robotics, surgical systems, rehabilitation technology",https://www.cuhk.edu.hk/
-Tel Aviv University Robotics,Multiple PIs,Tel Aviv University,Tel Aviv,Israel,"Bio-inspired robotics, soft robotics, autonomous systems",https://www.tau.ac.il/
-Technion Robotics,Multiple PIs,Technion - Israel Institute of Technology,Haifa,Israel,"Autonomous systems, computer vision, intelligent control",https://www.technion.ac.il/
-Ben-Gurion University Robotics,Multiple PIs,Ben-Gurion University of the Negev,Beer-Sheva,Israel,"Desert robotics, autonomous navigation, field systems",https://www.bgu.ac.il/
-King Abdullah University Robotics,Multiple PIs,King Abdullah University of Science and Technology,Thuwal,Saudi Arabia,"Underwater robotics, marine systems, autonomous exploration",https://www.kaust.edu.sa/
-University of São Paulo Robotics,Multiple PIs,University of São Paulo,São Paulo,Brazil,"Agricultural robotics, autonomous systems, intelligent control",https://www5.usp.br/
-PUC-Rio Robotics,Multiple PIs,Pontifical Catholic University of Rio de Janeiro,Rio de Janeiro,Brazil,"Humanoid robotics, cognitive systems, AI applications",https://www.puc-rio.br/
-University of Alberta Robotics,Multiple PIs,University of Alberta,Edmonton,Canada,"Field robotics, autonomous systems, computer vision",https://www.ualberta.ca/
-University of Waterloo Robotics,Multiple PIs,University of Waterloo,Waterloo,Canada,"Autonomous vehicles, computer vision, intelligent systems",https://uwaterloo.ca/
-Carleton University Robotics,Multiple PIs,Carleton University,Ottawa,Canada,"Autonomous systems, human-robot interaction, assistive technology",https://carleton.ca/
-Concordia University Robotics,Multiple PIs,Concordia University,Montreal,Canada,"Industrial robotics, automation systems, intelligent control",https://www.concordia.ca/
-York University Robotics,Multiple PIs,York University,Toronto,Canada,"Computer vision, autonomous systems, AI applications",https://www.yorku.ca/
-Queen's University Robotics,Multiple PIs,Queen's University,Kingston,Canada,"Medical robotics, rehabilitation systems, assistive technology",https://www.queensu.ca/
+Florida Institute for Human & Machine Cognition (IHMC),Multiple PIs,IHMC,Pensacola,USA,"Human-machine teaming, robust control + learning for legged/wearable robots",https://robots.ihmc.us/
+Robot Learning Lab,Deepak Pathak,Carnegie Mellon University,Pittsburgh,USA,"Self-Supervised Learning, Exploration, Embodied AI",https://www.cs.cmu.edu/~dpathak/
+Manipulation Lab,Matthew Mason,Carnegie Mellon University,Pittsburgh,USA,"Manipulation, Tactile Sensing, Grasping",https://www.ri.cmu.edu/ri-faculty/matthew-t-mason/
+Field Robotics Center,Red Whittaker,Carnegie Mellon University,Pittsburgh,USA,"Field Robotics, Autonomous Vehicles, Space Robotics",https://www.ri.cmu.edu/research-center/field-robotics-center/
+Robot Learning Lab (IRI),Carme Torras,Technical University of Catalonia (UPC),Barcelona,Spain,,https://www.iri.upc.edu/
+LaRAA - Learning and Adaptive Robotics,Lorenzo Natale,Italian Institute of Technology (IIT),Genoa,Italy,,https://www.iit.it/
+TUM Robot Learning Lab,Angela Schoellig,Technical University of Munich,Munich,Germany,,https://www.tum.de/
+KTH Robotics Lab,Danica Kragic,KTH Royal Institute of Technology,Stockholm,Sweden,,https://www.kth.se/
+IDSIA Robotics,Juergen Schmidhuber,University of Lugano (USI),Lugano,Switzerland,,https://www.idsia.ch/
+LAAS-CNRS Robotics,Multiple PIs,LAAS-CNRS,Toulouse,France,,https://www.laas.fr/en/departments/rob/
+INRIA Robotics Teams,Multiple PIs,INRIA,Multiple Cities,France,,https://www.inria.fr/
+Aalto Robotics Lab,Ville Kyrki,Aalto University,Espoo,Finland,,https://www.aalto.fi/
+University of Edinburgh Robotics,Multiple PIs,University of Edinburgh,Edinburgh,UK,,https://www.ed.ac.uk/
+Bristol Robotics Laboratory,Multiple PIs,University of Bristol & UWE Bristol,Bristol,UK,,https://www.brl.ac.uk/
+Robotics Institute of Beihang University,Multiple PIs,Beihang University,Beijing,China,,https://www.buaa.edu.cn/
+Harbin Institute of Technology Robotics,Multiple PIs,Harbin Institute of Technology,Harbin,China,,http://www.hit.edu.cn/
+Zhejiang University Robotics,Multiple PIs,Zhejiang University,Hangzhou,China,,http://www.zju.edu.cn/
+Chinese Academy of Sciences IA,Multiple PIs,Institute of Automation CAS,Beijing,China,,http://www.ia.cas.cn/
+Waseda University Robotics,Multiple PIs,Waseda University,Tokyo,Japan,,https://www.waseda.jp/
+Osaka University Robotics,Multiple PIs,Osaka University,Osaka,Japan,,https://www.osaka-u.ac.jp/
+AIST Robotics,Multiple PIs,National Institute of Advanced Industrial Science and Technology,Tsukuba,Japan,,https://www.aist.go.jp/
+Tohoku University Robotics,Multiple PIs,Tohoku University,Sendai,Japan,,https://www.tohoku.ac.jp/
+University of Toronto Robotics,Multiple PIs,University of Toronto,Toronto,Canada,,https://www.utoronto.ca/
+McGill University Robotics,Multiple PIs,McGill University,Montreal,Canada,,https://www.mcgill.ca/
+University of British Columbia Robotics,Multiple PIs,University of British Columbia,Vancouver,Canada,,https://www.ubc.ca/
+Vector Institute Robotics Research,Multiple PIs,Vector Institute,Toronto,Canada,,https://vectorinstitute.ai/
+Australian Centre for Robotic Vision,Multiple PIs,Queensland University of Technology,Brisbane,Australia,,https://www.roboticvision.org/
+University of Sydney Robotics,Multiple PIs,University of Sydney,Sydney,Australia,,https://www.sydney.edu.au/
+CSIRO Robotics,Multiple PIs,Commonwealth Scientific and Industrial Research Organisation,Multiple Cities,Australia,,https://www.csiro.au/
+Monash Robotics,Multiple PIs,Monash University,Melbourne,Australia,,https://www.monash.edu/
+TU Delft Robotics Institute,Multiple PIs,Delft University of Technology,Delft,Netherlands,,https://www.tudelft.nl/
+University of Twente Robotics,Multiple PIs,University of Twente,Enschede,Netherlands,,https://www.utwente.nl/
+RWTH Aachen Robotics,Multiple PIs,RWTH Aachen University,Aachen,Germany,,https://www.rwth-aachen.de/
+Technical University of Berlin Robotics,Multiple PIs,Technical University of Berlin,Berlin,Germany,,https://www.tu-berlin.de/
+University of Freiburg Robotics,Multiple PIs,University of Freiburg,Freiburg,Germany,,https://www.uni-freiburg.de/
+Karlsruhe Institute of Technology Robotics,Multiple PIs,Karlsruhe Institute of Technology,Karlsruhe,Germany,,https://www.kit.edu/
+Sapienza University Robotics,Multiple PIs,Sapienza University of Rome,Rome,Italy,,https://www.uniroma1.it/
+University of Pisa Robotics,Multiple PIs,University of Pisa,Pisa,Italy,,https://www.unipi.it/
+Politecnico di Milano Robotics,Multiple PIs,Politecnico di Milano,Milan,Italy,,https://www.polimi.it/
+IRISA Robotics,Multiple PIs,IRISA,Rennes,France,,https://www.irisa.fr/
+University of Grenoble Robotics,Multiple PIs,University of Grenoble,Grenoble,France,,https://www.univ-grenoble-alpes.fr/
+Sorbonne University Robotics,Multiple PIs,Sorbonne University,Paris,France,,https://www.sorbonne-universite.fr/
+IST Austria Robotics,Multiple PIs,Institute of Science and Technology Austria,Klosterneuburg,Austria,,https://ist.ac.at/
+Czech Technical University Robotics,Multiple PIs,Czech Technical University,Prague,Czech Republic,,https://www.cvut.cz/
+AGH University Robotics,Multiple PIs,AGH University of Science and Technology,Krakow,Poland,,https://www.agh.edu.pl/
+Indian Institute of Science Robotics,Multiple PIs,Indian Institute of Science,Bangalore,India,,https://www.iisc.ac.in/
+IIT Bombay Robotics,Multiple PIs,Indian Institute of Technology Bombay,Mumbai,India,,https://www.iitb.ac.in/
+IIT Delhi Robotics,Multiple PIs,Indian Institute of Technology Delhi,New Delhi,India,,https://www.iitd.ac.in/
+IIT Madras Robotics,Multiple PIs,Indian Institute of Technology Madras,Chennai,India,,https://www.iitm.ac.in/
+IIT Kanpur Robotics,Multiple PIs,Indian Institute of Technology Kanpur,Kanpur,India,,https://www.iitk.ac.in/
+IIIT Hyderabad Robotics,Multiple PIs,International Institute of Information Technology Hyderabad,Hyderabad,India,,https://www.iiit.ac.in/
+National University of Singapore Robotics,Multiple PIs,National University of Singapore,Singapore,Singapore,,https://www.nus.edu.sg/
+Hong Kong University of Science and Technology Robotics,Multiple PIs,Hong Kong University of Science and Technology,Hong Kong,Hong Kong,,https://www.ust.hk/
+Chinese University of Hong Kong Robotics,Multiple PIs,Chinese University of Hong Kong,Hong Kong,Hong Kong,,https://www.cuhk.edu.hk/
+Tel Aviv University Robotics,Multiple PIs,Tel Aviv University,Tel Aviv,Israel,,https://www.tau.ac.il/
+Technion Robotics,Multiple PIs,Technion - Israel Institute of Technology,Haifa,Israel,,https://www.technion.ac.il/
+Ben-Gurion University Robotics,Multiple PIs,Ben-Gurion University of the Negev,Beer-Sheva,Israel,,https://www.bgu.ac.il/
+King Abdullah University Robotics,Multiple PIs,King Abdullah University of Science and Technology,Thuwal,Saudi Arabia,,https://www.kaust.edu.sa/
+University of São Paulo Robotics,Multiple PIs,University of São Paulo,São Paulo,Brazil,,https://www5.usp.br/
+PUC-Rio Robotics,Multiple PIs,Pontifical Catholic University of Rio de Janeiro,Rio de Janeiro,Brazil,,https://www.puc-rio.br/
+University of Alberta Robotics,Multiple PIs,University of Alberta,Edmonton,Canada,,https://www.ualberta.ca/
+University of Waterloo Robotics,Multiple PIs,University of Waterloo,Waterloo,Canada,,https://uwaterloo.ca/
+Carleton University Robotics,Multiple PIs,Carleton University,Ottawa,Canada,,https://carleton.ca/
+Concordia University Robotics,Multiple PIs,Concordia University,Montreal,Canada,,https://www.concordia.ca/
+York University Robotics,Multiple PIs,York University,Toronto,Canada,,https://www.yorku.ca/
+Queen's University Robotics,Multiple PIs,Queen's University,Kingston,Canada,,https://www.queensu.ca/
+"SPARK Lab (Sensing, Perception, Autonomy, and Robot Kinetics)",Luca Carlone,MIT,Cambridge,USA,"perception, SLAM, autonomous systems, multi-robot systems",http://web.mit.edu/sparklab/
+Personal Robotics Group,Cynthia Breazeal,MIT,Cambridge,USA,"social robotics, human-robot interaction, assistive technology",https://www.media.mit.edu/groups/personal-robots/overview/
+MCube Lab,Alberto Rodriguez,MIT,Cambridge,USA,"manipulation, contact mechanics, grasping",http://mcube.mit.edu/
+Distributed Robotics Lab,Daniela Rus,MIT,Cambridge,USA,"distributed systems, swarm robotics, multi-robot coordination",http://groups.csail.mit.edu/drl/
+Robot Locomotion Group,Russ Tedrake,MIT,Cambridge,USA,"locomotion, dynamic systems, control theory, learning",http://groups.csail.mit.edu/locomotion/
+Biomimetic Robotics Lab,Sangbae Kim,MIT,Cambridge,USA,"biomimetics, locomotion, legged robots",https://biomimetics.mit.edu/
+Interactive Robotics Group,Julie Shah,MIT,Cambridge,USA,"human-robot collaboration, manufacturing, planning",https://interactive.mit.edu/
+Robust Robotics Group,Nick Roy,MIT,Cambridge,USA,"autonomous navigation, planning, UAVs",http://groups.csail.mit.edu/rrg/
+Improbable AI,Pulkit Agrawal,MIT,Cambridge,USA,"artificial intelligence, learning, robotics",https://people.csail.mit.edu/pulkitag/
+D'Arbeloff Lab: Robotics,Harry Asada,MIT,Cambridge,USA,"robotics, manufacturing, automation",http://darbeloff.mit.edu/
+AUTOLAB (Laboratory for Automation Science and Engineering),Ken Goldberg,UC Berkeley,Berkeley,USA,"automation, grasping, cloud robotics, surgical robotics",http://autolab.berkeley.edu/
+Berkeley AI Research Lab (BAIR) - Robotics,Pieter Abbeel,UC Berkeley,Berkeley,USA,"deep learning, reinforcement learning, robotics",http://bair.berkeley.edu/
+Robot Learning Lab,Sergey Levine,UC Berkeley,Berkeley,USA,"robot learning, deep learning, reinforcement learning",https://people.eecs.berkeley.edu/~svlevine/
+Human-Robot Interaction Lab,Anca Dragan,UC Berkeley,Berkeley,USA,"human-robot interaction, motion planning, assistive robotics",https://people.eecs.berkeley.edu/~anca/
+Biomimetic Millisystems Lab,Ronald Fearing,UC Berkeley,Berkeley,USA,"biomimetics, microrobotics, micro-manipulation",http://bml.eecs.berkeley.edu/
+Hybrid Systems Lab,Claire Tomlin,UC Berkeley,Berkeley,USA,"hybrid systems, control theory, safety verification",https://people.eecs.berkeley.edu/~tomlin/
+Autonomous Systems Lab (ASL),Marco Pavone,Stanford University,Stanford,USA,"autonomous vehicles, motion planning, control",https://asl.stanford.edu/
+Assistive Robotics and Manipulation (ARM) Lab,Monroe Kennedy III,Stanford University,Stanford,USA,"assistive robotics, manipulation, human-robot interaction",https://arm.stanford.edu/
+Intelligence through Robotic Interaction at Scale (IRIS),Chelsea Finn,Stanford University,Stanford,USA,"robot learning, meta-learning, generalization",https://irislab.stanford.edu/
+Biomimetics and Dexterous Manipulation Lab (BDML),Mark Cutkosky,Stanford University,Stanford,USA,"biomimetics, dexterous manipulation, climbing robots",http://bdml.stanford.edu/
+Multi-Robot Systems Lab (MSL),Mac Schwager,Stanford University,Stanford,USA,"multi-robot systems, swarm robotics, coordination",https://msl.stanford.edu/
+Stanford Vision and Learning Lab (SVL),Fei-Fei Li,Stanford University,Stanford,USA,"computer vision, robot learning, scene understanding",https://svl.stanford.edu/
+CHARM Lab,Allison Okamura,Stanford University,Stanford,USA,"haptics, medical robotics, teleoperation",https://charm.stanford.edu/
+Robotics Lab,Oussama Khatib,Stanford University,Stanford,USA,"manipulation, humanoid robotics, underwater robotics",https://cs.stanford.edu/group/manips/
+AirLab,Sebastian Scherer,Carnegie Mellon University,Pittsburgh,USA,"UAVs, perception, autonomous flight",https://theairlab.org/
+Biorobotics Lab,Howie Choset,Carnegie Mellon University,Pittsburgh,USA,"snake robots, path planning, medical robotics",http://biorobotics.ri.cmu.edu/
+Intelligent Autonomous Manipulation (IAM) Lab,Oliver Kroemer,Carnegie Mellon University,Pittsburgh,USA,"manipulation, learning, grasping",https://iamlab.ri.cmu.edu/
+Robot Perception Lab,Michael Kaess,Carnegie Mellon University,Pittsburgh,USA,"SLAM, state estimation, perception",http://rpl.ri.cmu.edu/
+Navlab,Martial Hebert,Carnegie Mellon University,Pittsburgh,USA,"navigation, computer vision, autonomous vehicles",http://www.navlab.net/
+Human And Robot Partners Lab,Henny Admoni,Carnegie Mellon University,Pittsburgh,USA,"human-robot interaction, assistive robotics, social robotics",https://harp.ri.cmu.edu/
+Robotic Exploration Lab,Zachary Manchester,Carnegie Mellon University,Pittsburgh,USA,"space robotics, control, optimization",https://roboticexplorationlab.org/
+Search-based Planning Laboratory,Maxim Likhachev,Carnegie Mellon University,Pittsburgh,USA,"path planning, search algorithms, autonomous navigation",http://sbpl.net/
+Personal Robotics Lab,Siddhartha Srinivasa,University of Washington,Seattle,USA,"manipulation, human-robot interaction, assistive robotics",https://personalrobotics.cs.washington.edu/
+Robot Learning Lab,Abhishek Gupta,University of Washington,Seattle,USA,"robot learning, reinforcement learning, generalization",https://robotlearning.cs.washington.edu/
+Robotics and State Estimation Lab,Dieter Fox,University of Washington,Seattle,USA,"state estimation, SLAM, perception",https://rse-lab.cs.washington.edu/
+Sensor Systems Laboratory,Joshua Smith,University of Washington,Seattle,USA,"sensor systems, wireless power, RFID",https://sensor.cs.washington.edu/
