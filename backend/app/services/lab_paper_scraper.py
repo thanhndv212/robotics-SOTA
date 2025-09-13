@@ -404,7 +404,10 @@ class LabPaperScraper:
             
         except Exception as e:
             print(f"    Failed to import ArXiv paper: {e}")
-            db.session.rollback()
+            try:
+                db.session.rollback()
+            except:
+                pass
             return False
     
     async def _import_scholar_paper(self, scholar_paper, lab: Lab) -> bool:
