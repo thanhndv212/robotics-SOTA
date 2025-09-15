@@ -53,7 +53,7 @@ import ResearchGroupManager from './components/ResearchGroupManager';
 import './App.css';
 
 const { Header, Content, Footer, Sider } = Layout;
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 
 interface Lab {
@@ -122,6 +122,7 @@ const App: React.FC = () => {
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
   const [groupByInstitution, setGroupByInstitution] = useState(false);
+  const [showChronologicalPapers, setShowChronologicalPapers] = useState(false);
   const pageSize = 12;
 
   const loadLabs = async () => {
@@ -534,6 +535,29 @@ const App: React.FC = () => {
     return Object.entries(grouped).sort((a, b) => b[1].length - a[1].length); // Sort by number of labs
   };
 
+  // Get all papers from all labs in chronological order
+  const getAllPapersChronologically = () => {
+    const allPapers: (Paper & { lab: Lab })[] = [];
+    
+    labs.forEach(lab => {
+      if (lab.papers && lab.papers.length > 0) {
+        lab.papers.forEach(paper => {
+          allPapers.push({
+            ...paper,
+            lab: lab
+          });
+        });
+      }
+    });
+    
+    // Sort by publication date (latest first)
+    return allPapers.sort((a, b) => {
+      const dateA = new Date(a.publication_date || '1900-01-01').getTime();
+      const dateB = new Date(b.publication_date || '1900-01-01').getTime();
+      return dateB - dateA;
+    });
+  };
+
   // Get labs for current page
   const startIndex = (currentPage - 1) * pageSize;
   const currentLabs = filteredLabs.slice(startIndex, startIndex + pageSize);
@@ -545,15 +569,27 @@ const App: React.FC = () => {
         <Title level={2} style={{ color: 'white', margin: 0 }}>
           🤖 Robotics Research Trends - State of the Art
         </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreateLab}
-          size="large"
-          style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-        >
-          Add New Lab
-        </Button>
+        <Space>
+          <Space align="center" style={{ color: 'white' }}>
+            <span>Labs View</span>
+            <Switch
+              checked={showChronologicalPapers}
+              onChange={setShowChronologicalPapers}
+              checkedChildren="Papers"
+              unCheckedChildren="Labs"
+            />
+            <span>Papers View</span>
+          </Space>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreateLab}
+            size="large"
+            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+          >
+            Add New Lab
+          </Button>
+        </Space>
       </Header>
       
       <Layout>
@@ -693,12 +729,13 @@ const App: React.FC = () => {
             </Col>
             
             <Col span={24}>
-              <Card 
-                title={groupByInstitution 
-                  ? `Research Labs - ${institutionGroups.length} institutions (${filteredLabs.length} total labs)` 
-                  : `Research Labs (${filteredLabs.length} results)`
-                } 
-                loading={loading}
+              {!showChronologicalPapers ? (
+                <Card 
+                  title={groupByInstitution 
+                    ? `Research Labs - ${institutionGroups.length} institutions (${filteredLabs.length} total labs)` 
+                    : `Research Labs (${filteredLabs.length} results)`
+                  } 
+                  loading={loading}
                 extra={
                   <Space size="large">
                     <Space>
@@ -1776,6 +1813,121 @@ const App: React.FC = () => {
                   </div>
                 )}
               </Card>
+              ) : (
+                <Card 
+                  title={`All Papers - Chronological View (${getAllPapersChronologically().length} papers)`}
+                  loading={loading}
+                >
+                  <List
+                    itemLayout="vertical"
+                    size="large"
+                    pagination={{
+                      onChange: (page) => setCurrentPage(page),
+                      pageSize: 20,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                      showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} papers`,
+                    }}
+                    dataSource={getAllPapersChronologically()}
+                    renderItem={(paper: Paper & { lab: Lab }) => (
+                      <List.Item
+                        key={`${paper.lab.id}-${paper.id}`}
+                        actions={[
+                          <Space key="actions">
+                            {paper.pdf_url && (
+                              <Button
+                                type="link"
+                                icon={<FileTextOutlined />}
+                                href={paper.pdf_url}
+                                target="_blank"
+                                size="small"
+                              >
+                                PDF
+                              </Button>
+                            )}
+                            {paper.arxiv_id && (
+                              <Button
+                                type="link"
+                                href={`https://arxiv.org/abs/${paper.arxiv_id}`}
+                                target="_blank"
+                                size="small"
+                              >
+                                ArXiv
+                              </Button>
+                            )}
+                            {paper.doi && (
+                              <Button
+                                type="link"
+                                href={`https://doi.org/${paper.doi}`}
+                                target="_blank"
+                                size="small"
+                              >
+                                DOI
+                              </Button>
+                            )}
+                          </Space>
+                        ]}
+                        extra={
+                          <Space direction="vertical" align="end">
+                            <Tag color="blue">{paper.lab.name}</Tag>
+                            <Tag color="green">{paper.lab.institution}</Tag>
+                            {paper.venue && <Tag color="orange">{paper.venue}</Tag>}
+                            {paper.publication_date && (
+                              <Text type="secondary">
+                                <CalendarOutlined /> {new Date(paper.publication_date).toLocaleDateString()}
+                              </Text>
+                            )}
+                          </Space>
+                        }
+                      >
+                        <List.Item.Meta
+                          title={
+                            <Space>
+                              <Text strong style={{ fontSize: '16px' }}>
+                                {paper.title}
+                              </Text>
+                              {paper.paper_type && (
+                                <Tag color={
+                                  paper.paper_type === 'journal' ? 'red' :
+                                  paper.paper_type === 'conference' ? 'blue' :
+                                  paper.paper_type === 'preprint' ? 'orange' : 'default'
+                                }>
+                                  {paper.paper_type}
+                                </Tag>
+                              )}
+                            </Space>
+                          }
+                          description={
+                            <Space direction="vertical" style={{ width: '100%' }}>
+                              <Text>
+                                <strong>Authors:</strong> {formatAuthors(paper.authors)}
+                              </Text>
+                              {paper.lab.pi && (
+                                <Text>
+                                  <strong>Lab PI:</strong> {paper.lab.pi}
+                                </Text>
+                              )}
+                              {paper.abstract && (
+                                <Paragraph
+                                  ellipsis={{ 
+                                    rows: 3, 
+                                    expandable: true, 
+                                    symbol: 'more',
+                                    onExpand: () => console.log('expanded')
+                                  }}
+                                  style={{ marginTop: 8 }}
+                                >
+                                  {paper.abstract}
+                                </Paragraph>
+                              )}
+                            </Space>
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                </Card>
+              )}
             </Col>
           </Row>
         </Content>
