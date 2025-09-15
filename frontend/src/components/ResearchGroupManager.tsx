@@ -208,7 +208,10 @@ const ResearchGroupManager: React.FC<ResearchGroupManagerProps> = ({
                 <Divider style={{ margin: '8px 0' }}>Recent Papers</Divider>
                 <List
                   size="small"
-                  dataSource={group.papers.slice(0, 3)}
+                  dataSource={group.papers
+                    .sort((a: any, b: any) => new Date(b.publication_date).getTime() - new Date(a.publication_date).getTime())
+                    .slice(0, 3)
+                  }
                   renderItem={(paper: any) => (
                     <List.Item
                       actions={[

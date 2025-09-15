@@ -105,7 +105,13 @@ class Lab(db.Model):
         }
         
         if include_papers:
-            result['papers'] = [paper.to_dict() for paper in self.papers]
+            # Sort papers by publication_date in descending order (latest first)
+            sorted_papers = sorted(
+                self.papers, 
+                key=lambda p: p.publication_date if p.publication_date else datetime.min.date(), 
+                reverse=True
+            )
+            result['papers'] = [paper.to_dict() for paper in sorted_papers]
             result['paper_count'] = len(self.papers)
         
         if include_sub_groups:

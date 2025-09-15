@@ -241,7 +241,8 @@ def scrape_papers():
         def run_scraping():
             """Run scraping in background thread"""
             async def async_scrape():
-                scraper = LabPaperScraper()
+                from flask import current_app
+                scraper = LabPaperScraper(current_app)
                 results = []
                 for lab in labs:
                     try:
@@ -306,7 +307,8 @@ def scrape_institutional_papers():
         def run_institutional_scraping():
             """Run institutional scraping in background thread"""
             async def async_scrape():
-                scraper = LabPaperScraper()
+                from flask import current_app
+                scraper = LabPaperScraper(current_app)
                 all_papers = []
                 
                 for institution in institutions:

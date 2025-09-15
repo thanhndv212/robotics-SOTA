@@ -886,7 +886,7 @@ const App: React.FC = () => {
                                             >
                                               <List
                                                 itemLayout="vertical"
-                                                dataSource={lab.papers}
+                                                dataSource={lab.papers?.sort((a, b) => new Date(b.publication_date).getTime() - new Date(a.publication_date).getTime())}
                                                 renderItem={(paper, index) => (
                                                   <List.Item
                                                     key={index}
@@ -1227,7 +1227,7 @@ const App: React.FC = () => {
                                       >
                                         <List
                                           itemLayout="vertical"
-                                          dataSource={lab.papers}
+                                          dataSource={lab.papers?.sort((a, b) => new Date(b.publication_date).getTime() - new Date(a.publication_date).getTime())}
                                           renderItem={(paper, index) => (
                                             <List.Item
                                               key={index}
@@ -1378,7 +1378,10 @@ const App: React.FC = () => {
                                     {lab.papers && lab.papers.length > 0 && (
                                       <div style={{ marginTop: 12 }}>
                                         <Divider style={{ margin: '8px 0' }}>Recent Papers</Divider>
-                                        {lab.papers.slice(0, 2).map((paper, index) => (
+                                        {lab.papers
+                                          .sort((a, b) => new Date(b.publication_date).getTime() - new Date(a.publication_date).getTime())
+                                          .slice(0, 2)
+                                          .map((paper, index) => (
                                           <div key={index} className="paper-item" style={{ marginBottom: 8, padding: 6, background: '#f9f9f9', borderRadius: 4 }}>
                                             <Tooltip title={paper.title}>
                                               <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: 2 }}>

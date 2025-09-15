@@ -36,8 +36,8 @@ async def debug_scraping():
         print(f"Website: {lab.website}")
         print()
         
-        # Create scraper
-        scraper = LabPaperScraper()
+        # Create scraper with app context
+        scraper = LabPaperScraper(app)
         scraper.max_papers_per_lab = 2  # Limit for testing
         
         # Test query building
@@ -54,7 +54,7 @@ async def debug_scraping():
         print()
         
         # Check what papers were imported
-        lab_papers = Paper.query.filter_by(lab_id=lab.id).all()
+        lab_papers = Paper.query.filter_by(lab_id=lab.id).order_by(Paper.publication_date.desc()).all()
         print(f"📚 Papers in database for this lab: {len(lab_papers)}")
         for paper in lab_papers:
             print(f"  - {paper.title}")

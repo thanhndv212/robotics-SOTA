@@ -6,6 +6,7 @@ from typing import List
 from datetime import datetime
 from scholarly import scholarly
 from bs4 import BeautifulSoup
+from flask import current_app
 from app import db
 from app.models import Paper, Lab
 
@@ -13,37 +14,46 @@ from app.models import Paper, Lab
 class LabPaperScraper:
     """Enhanced paper scraper for robotics labs"""
     
-    def __init__(self):
+    def __init__(self, app=None):
         self.rate_limit_delay = 1  # Reduced from 2 to 1 second
         self.max_papers_per_lab = 15  # Increased from 10 to 15
         self.session = None
+        self.app = app or current_app._get_current_object() if current_app else None
+    
+    def _ensure_app_context(self):
+        """Ensure we're running within Flask application context"""
+        if not self.app:
+            from app import create_app
+            self.app = create_app()
+        return self.app.app_context()
     
     async def scrape_all_labs(self):
         """Scrape papers for all labs in the database"""
-        labs = Lab.query.all()
-        print(f"🔍 Starting paper scraping for {len(labs)} labs...")
-        
-        total_papers = 0
-        async with aiohttp.ClientSession() as session:
-            self.session = session
+        with self._ensure_app_context():
+            labs = Lab.query.all()
+            print(f"🔍 Starting paper scraping for {len(labs)} labs...")
             
-            for i, lab in enumerate(labs, 1):
-                print(f"\n📚 [{i}/{len(labs)}] Processing {lab.name}...")
+            total_papers = 0
+            async with aiohttp.ClientSession() as session:
+                self.session = session
                 
-                try:
-                    lab_papers = await self.scrape_lab_papers(lab)
-                    total_papers += lab_papers
-                    print(f"✅ Found {lab_papers} papers for {lab.name}")
+                for i, lab in enumerate(labs, 1):
+                    print(f"\n📚 [{i}/{len(labs)}] Processing {lab.name}...")
                     
-                    # Rate limiting
-                    await asyncio.sleep(self.rate_limit_delay)
-                    
-                except Exception as e:
-                    print(f"❌ Error scraping {lab.name}: {e}")
-                    continue
-        
-        print(f"\n🎉 Scraping complete! Total papers found: {total_papers}")
-        return total_papers
+                    try:
+                        lab_papers = await self.scrape_lab_papers(lab)
+                        total_papers += lab_papers
+                        print(f"✅ Found {lab_papers} papers for {lab.name}")
+                        
+                        # Rate limiting
+                        await asyncio.sleep(self.rate_limit_delay)
+                        
+                    except Exception as e:
+                        print(f"❌ Error scraping {lab.name}: {e}")
+                        continue
+            
+            print(f"\n🎉 Scraping complete! Total papers found: {total_papers}")
+            return total_papers
     
     async def scrape_lab_papers(self, lab: Lab, sources: List[str] = None, max_papers: int = None) -> int:
         """Scrape papers for a specific lab using multiple strategies"""
@@ -87,7 +97,8 @@ class LabPaperScraper:
                     )
                     
                     query_papers = 0
-                    for paper in search.results():
+                    client = arxiv.Client()
+                    for paper in client.results(search):
                         print(f"    📄 Found paper: {paper.title}")
                         if await self._import_arxiv_paper(paper, lab):
                             papers_found += 1
@@ -204,7 +215,8 @@ class LabPaperScraper:
                         sort_by=arxiv.SortCriterion.SubmittedDate
                     )
                     
-                    for paper in search.results():
+                    client = arxiv.Client()
+                    for paper in client.results(search):
                         print(f"    📄 Found institutional paper: {paper.title}")
                         
                         # Check if this paper belongs to any existing lab
@@ -272,16 +284,17 @@ class LabPaperScraper:
         """Check if a paper belongs to any existing lab by checking authors"""
         from app.models import Lab
         
-        # Get all lab PIs
-        labs = Lab.query.all()
-        pi_last_names = set()
-        
-        for lab in labs:
-            if lab.pi and lab.pi != 'Multiple PIs':
-                pi_name = lab.pi.strip()
-                if ' ' in pi_name:
-                    last_name = pi_name.split()[-1].lower()
-                    pi_last_names.add(last_name)
+        with self._ensure_app_context():
+            # Get all lab PIs
+            labs = Lab.query.all()
+            pi_last_names = set()
+            
+            for lab in labs:
+                if lab.pi and lab.pi != 'Multiple PIs':
+                    pi_name = lab.pi.strip()
+                    if ' ' in pi_name:
+                        last_name = pi_name.split()[-1].lower()
+                        pi_last_names.add(last_name)
         
         # Check if any paper author matches a known PI
         paper_authors = [str(author).lower() for author in arxiv_paper.authors]
@@ -365,47 +378,49 @@ class LabPaperScraper:
     async def _import_arxiv_paper(self, arxiv_paper, lab: Lab) -> bool:
         """Import a paper from ArXiv"""
         try:
-            arxiv_id = arxiv_paper.entry_id.split('/')[-1]
-            
-            # Check if paper already exists
-            existing_paper = Paper.query.filter_by(arxiv_id=arxiv_id).first()
-            if existing_paper:
-                return False
-            
-            # Extract paper data
-            authors = [str(author) for author in arxiv_paper.authors]
-            title = arxiv_paper.title.strip()
-            abstract = arxiv_paper.summary.strip()
-            
-            # Verify relevance to robotics - relaxed filter for author-based search
-            if not self._is_robotics_paper(title, abstract, relaxed=True):
-                return False
-            
-            import json
-            
-            paper = Paper(
-                title=title,
-                authors=json.dumps(authors),  # Convert list to JSON string
-                abstract=abstract,
-                publication_date=arxiv_paper.published.date(),
-                venue='arXiv',
-                paper_type='preprint',
-                arxiv_id=arxiv_id,
-                pdf_url=arxiv_paper.pdf_url,
-                research_areas=json.dumps(self._extract_research_areas(title + " " + abstract)),  # Convert to JSON
-                keywords=json.dumps(self._extract_keywords(title + " " + abstract)),  # Convert to JSON
-                lab_id=lab.id,
-                citation_count=0
-            )
-            
-            db.session.add(paper)
-            db.session.commit()
-            return True
+            with self._ensure_app_context():
+                arxiv_id = arxiv_paper.entry_id.split('/')[-1]
+                
+                # Check if paper already exists
+                existing_paper = Paper.query.filter_by(arxiv_id=arxiv_id).first()
+                if existing_paper:
+                    return False
+                
+                # Extract paper data
+                authors = [str(author) for author in arxiv_paper.authors]
+                title = arxiv_paper.title.strip()
+                abstract = arxiv_paper.summary.strip()
+                
+                # Verify relevance to robotics - relaxed filter for author-based search
+                if not self._is_robotics_paper(title, abstract, relaxed=True):
+                    return False
+                
+                import json
+                
+                paper = Paper(
+                    title=title,
+                    authors=json.dumps(authors),  # Convert list to JSON string
+                    abstract=abstract,
+                    publication_date=arxiv_paper.published.date(),
+                    venue='arXiv',
+                    paper_type='preprint',
+                    arxiv_id=arxiv_id,
+                    pdf_url=arxiv_paper.pdf_url,
+                    research_areas=json.dumps(self._extract_research_areas(title + " " + abstract)),  # Convert to JSON
+                    keywords=json.dumps(self._extract_keywords(title + " " + abstract)),  # Convert to JSON
+                    lab_id=lab.id,
+                    citation_count=0
+                )
+                
+                db.session.add(paper)
+                db.session.commit()
+                return True
             
         except Exception as e:
             print(f"    Failed to import ArXiv paper: {e}")
             try:
-                db.session.rollback()
+                with self._ensure_app_context():
+                    db.session.rollback()
             except:
                 pass
             return False
@@ -413,59 +428,64 @@ class LabPaperScraper:
     async def _import_scholar_paper(self, scholar_paper, lab: Lab) -> bool:
         """Import a paper from Google Scholar"""
         try:
-            title = scholar_paper.get('title', '').strip()
-            
-            if not title:
-                return False
-            
-            # Check if paper already exists
-            existing_paper = Paper.query.filter_by(title=title).first()
-            if existing_paper:
-                return False
-            
-            # Extract data
-            authors = scholar_paper.get('author', '').split(' and ')
-            abstract = scholar_paper.get('abstract', '')
-            year = scholar_paper.get('year')
-            venue = scholar_paper.get('venue', 'Unknown')
-            citation_count = scholar_paper.get('num_citations', 0)
-            
-            # Verify relevance - relaxed filter for scholar search
-            if not self._is_robotics_paper(title, abstract, relaxed=True):
-                return False
-            
-            # Try to get publication date
-            pub_date = None
-            if year:
-                try:
-                    pub_date = datetime(int(year), 1, 1).date()
-                except:
+            with self._ensure_app_context():
+                title = scholar_paper.get('title', '').strip()
+                
+                if not title:
+                    return False
+                
+                # Check if paper already exists
+                existing_paper = Paper.query.filter_by(title=title).first()
+                if existing_paper:
+                    return False
+                
+                # Extract data
+                authors = scholar_paper.get('author', '').split(' and ')
+                abstract = scholar_paper.get('abstract', '')
+                year = scholar_paper.get('year')
+                venue = scholar_paper.get('venue', 'Unknown')
+                citation_count = scholar_paper.get('num_citations', 0)
+                
+                # Verify relevance - relaxed filter for scholar search
+                if not self._is_robotics_paper(title, abstract, relaxed=True):
+                    return False
+                
+                # Try to get publication date
+                pub_date = None
+                if year:
+                    try:
+                        pub_date = datetime(int(year), 1, 1).date()
+                    except:
+                        pub_date = datetime.now().date()
+                else:
                     pub_date = datetime.now().date()
-            else:
-                pub_date = datetime.now().date()
-            
-            import json
-            
-            paper = Paper(
-                title=title,
-                authors=json.dumps(authors),  # Convert list to JSON string
-                abstract=abstract,
-                publication_date=pub_date,
-                venue=venue,
-                paper_type='journal' if 'journal' in venue.lower() else 'conference',
-                research_areas=json.dumps(self._extract_research_areas(title + " " + abstract)),  # Convert to JSON
-                keywords=json.dumps(self._extract_keywords(title + " " + abstract)),  # Convert to JSON
-                lab_id=lab.id,
-                citation_count=citation_count or 0
-            )
-            
-            db.session.add(paper)
-            db.session.commit()
-            return True
+                
+                import json
+                
+                paper = Paper(
+                    title=title,
+                    authors=json.dumps(authors),  # Convert list to JSON string
+                    abstract=abstract,
+                    publication_date=pub_date,
+                    venue=venue,
+                    paper_type='journal' if 'journal' in venue.lower() else 'conference',
+                    research_areas=json.dumps(self._extract_research_areas(title + " " + abstract)),  # Convert to JSON
+                    keywords=json.dumps(self._extract_keywords(title + " " + abstract)),  # Convert to JSON
+                    lab_id=lab.id,
+                    citation_count=citation_count or 0
+                )
+                
+                db.session.add(paper)
+                db.session.commit()
+                return True
             
         except Exception as e:
             print(f"    Failed to import Scholar paper: {e}")
-            db.session.rollback()
+            try:
+                with self._ensure_app_context():
+                    db.session.rollback()
+            except:
+                pass
             return False
     
     async def _parse_publication_page(self, html: str, lab: Lab, url: str) -> int:
@@ -510,32 +530,39 @@ class LabPaperScraper:
     async def _import_website_paper(self, title: str, lab: Lab, source_url: str) -> bool:
         """Import a paper found on lab website"""
         try:
-            # Check if paper already exists
-            existing_paper = Paper.query.filter_by(title=title).first()
-            if existing_paper:
-                return False
-            
-            paper = Paper(
-                title=title,
-                authors=[lab.pi],  # Default to PI, could be enhanced
-                abstract='',  # Would need additional scraping
-                publication_date=datetime.now().date(),
-                venue='Lab Website',
-                paper_type='website',
-                website_url=source_url,
-                research_areas=self._extract_research_areas(title),
-                keywords=self._extract_keywords(title),
-                lab_id=lab.id,
-                citation_count=0
-            )
-            
-            db.session.add(paper)
-            db.session.commit()
-            return True
+            with self._ensure_app_context():
+                # Check if paper already exists
+                existing_paper = Paper.query.filter_by(title=title).first()
+                if existing_paper:
+                    return False
+                
+                import json
+                
+                paper = Paper(
+                    title=title,
+                    authors=json.dumps([lab.pi]),  # Default to PI, could be enhanced
+                    abstract='',  # Would need additional scraping
+                    publication_date=datetime.now().date(),
+                    venue='Lab Website',
+                    paper_type='website',
+                    website_url=source_url,
+                    research_areas=json.dumps(self._extract_research_areas(title)),
+                    keywords=json.dumps(self._extract_keywords(title)),
+                    lab_id=lab.id,
+                    citation_count=0
+                )
+                
+                db.session.add(paper)
+                db.session.commit()
+                return True
             
         except Exception as e:
             print(f"    Failed to import website paper: {e}")
-            db.session.rollback()
+            try:
+                with self._ensure_app_context():
+                    db.session.rollback()
+            except:
+                pass
             return False
     
     def _is_robotics_paper(self, title: str, abstract: str, relaxed: bool = False) -> bool:
@@ -741,7 +768,9 @@ class LabPaperScraper:
 
 async def run_paper_scraper():
     """Main function to run the paper scraper"""
-    scraper = LabPaperScraper()
+    from app import create_app
+    app = create_app()
+    scraper = LabPaperScraper(app)
     total_papers = await scraper.scrape_all_labs()
     return total_papers
 
@@ -753,4 +782,5 @@ if __name__ == "__main__":
     
     # Run the scraper
     total = asyncio.run(run_paper_scraper())
+    print(f"🎉 Scraping completed! Total papers: {total}")
     print(f"Total papers scraped: {total}")

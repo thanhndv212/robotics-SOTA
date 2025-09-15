@@ -69,8 +69,8 @@ async def main():
             print("🔍 STARTING PAPER SCRAPING...")
             print("=" * 80)
             
-            # Initialize scraper
-            scraper = LabPaperScraper()
+            # Initialize scraper with app context
+            scraper = LabPaperScraper(app)
             
             # Run scraping
             total_papers = await scraper.scrape_all_labs()
@@ -91,7 +91,7 @@ async def main():
             # Show sample results
             if new_papers > 0:
                 print("📚 Sample new papers:")
-                recent_papers = Paper.query.filter_by(lab_id=sample_labs[0].id).limit(3).all()
+                recent_papers = Paper.query.filter_by(lab_id=sample_labs[0].id).order_by(Paper.publication_date.desc()).limit(3).all()
                 for paper in recent_papers:
                     print(f"   • {paper.title[:60]}...")
                     print(f"     {paper.venue} | {paper.publication_date}")
