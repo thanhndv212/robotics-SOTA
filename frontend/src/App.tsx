@@ -9,6 +9,7 @@ import {
   Avatar,
   Table,
   Switch,
+  Segmented,
   Button, 
   Typography, 
   Statistic, 
@@ -45,7 +46,8 @@ import {
   CompressOutlined,
   TeamOutlined,
   CalendarOutlined,
-  DollarOutlined
+  DollarOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import LabFormModal from './components/LabFormModal';
 import PaperFormModal from './components/PaperFormModal';
@@ -123,6 +125,9 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
   const [groupByInstitution, setGroupByInstitution] = useState(false);
   const [showChronologicalPapers, setShowChronologicalPapers] = useState(false);
+  const [currentView, setCurrentView] = useState<'labs' | 'papers' | 'arxiv'>('labs');
+  const [arxivPapers, setArxivPapers] = useState<any[]>([]);
+  const [arxivLoading, setArxivLoading] = useState(false);
   const pageSize = 12;
 
   const loadLabs = async () => {
@@ -149,7 +154,29 @@ const App: React.FC = () => {
 
   useEffect(() => {
     loadLabs();
+    loadArxivPapers();
   }, []);
+
+  const loadArxivPapers = async () => {
+    try {
+      setArxivLoading(true);
+      // Use our backend API to get ArXiv papers (avoids CORS issues)
+      const response = await fetch('http://127.0.0.1:8080/api/labs/arxiv-latest');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setArxivPapers(data.papers || []);
+    } catch (error) {
+      console.error('Error fetching ArXiv papers:', error);
+      // Fallback to empty array on error
+      setArxivPapers([]);
+    } finally {
+      setArxivLoading(false);
+    }
+  };
 
   const handleScrapePapers = async () => {
     try {
@@ -565,21 +592,46 @@ const App: React.FC = () => {
 
   return (
     <Layout className="app-layout">
-            <Header style={{ background: '#001529', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Header style={{ background: '#001529', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Title level={2} style={{ color: 'white', margin: 0 }}>
           🤖 Robotics Research Trends - State of the Art
         </Title>
         <Space>
-          <Space align="center" style={{ color: 'white' }}>
-            <span>Labs View</span>
-            <Switch
-              checked={showChronologicalPapers}
-              onChange={setShowChronologicalPapers}
-              checkedChildren="Papers"
-              unCheckedChildren="Labs"
-            />
-            <span>Papers View</span>
-          </Space>
+          <Segmented
+            value={currentView}
+            onChange={setCurrentView}
+            options={[
+              {
+                label: (
+                  <Space>
+                    <GlobalOutlined />
+                    <span>Labs</span>
+                  </Space>
+                ),
+                value: 'labs',
+              },
+              {
+                label: (
+                  <Space>
+                    <FileTextOutlined />
+                    <span>All Papers</span>
+                  </Space>
+                ),
+                value: 'papers',
+              },
+              {
+                label: (
+                  <Space>
+                    <ExperimentOutlined />
+                    <span>Latest ArXiv</span>
+                  </Space>
+                ),
+                value: 'arxiv',
+              },
+            ]}
+            size="large"
+            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+          />
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -682,37 +734,6 @@ const App: React.FC = () => {
               Find Other Lab Papers
             </Button>
           </Card>
-
-          {selectedLab && (
-            <Card title="Lab Details" style={{ marginTop: 16 }} size="small">
-              <Title level={5}>{selectedLab.name}</Title>
-              <p><strong>PI:</strong> {selectedLab.pi}</p>
-              <p><strong>Institution:</strong> {selectedLab.institution}</p>
-              <p><strong>Location:</strong> {selectedLab.city}, {selectedLab.country}</p>
-              {selectedLab.focus_areas && selectedLab.focus_areas.length > 0 && (
-                <div>
-                  <p><strong>Focus Areas:</strong></p>
-                  <div>
-                    {selectedLab.focus_areas.map((area, index) => (
-                      <Tag key={index} color="blue" style={{ marginBottom: 4 }}>
-                        {area}
-                      </Tag>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {selectedLab.website && (
-                <Button 
-                  type="primary" 
-                  href={selectedLab.website} 
-                  target="_blank"
-                  style={{ marginTop: 8 }}
-                >
-                  Visit Website
-                </Button>
-              )}
-            </Card>
-          )}
         </Sider>
 
         <Content style={{ padding: '24px' }}>
@@ -729,7 +750,7 @@ const App: React.FC = () => {
             </Col>
             
             <Col span={24}>
-              {!showChronologicalPapers ? (
+              {currentView === 'labs' ? (
                 <Card 
                   title={groupByInstitution 
                     ? `Research Labs - ${institutionGroups.length} institutions (${filteredLabs.length} total labs)` 
@@ -1813,7 +1834,7 @@ const App: React.FC = () => {
                   </div>
                 )}
               </Card>
-              ) : (
+              ) : currentView === 'papers' ? (
                 <Card 
                   title={`All Papers - Chronological View (${getAllPapersChronologically().length} papers)`}
                   loading={loading}
@@ -1923,6 +1944,90 @@ const App: React.FC = () => {
                             </Space>
                           }
                         />
+                      </List.Item>
+                    )}
+                  />
+                </Card>
+              ) : (
+                <Card 
+                  title="Latest ArXiv cs.RO Papers"
+                  loading={arxivLoading}
+                  extra={
+                    <Button 
+                      onClick={loadArxivPapers}
+                      icon={<ReloadOutlined />}
+                      size="small"
+                    >
+                      Refresh
+                    </Button>
+                  }
+                >
+                  <List
+                    grid={{
+                      gutter: 16,
+                      xs: 1,
+                      sm: 1,
+                      md: 2,
+                      lg: 2,
+                      xl: 3,
+                      xxl: 4,
+                    }}
+                    dataSource={arxivPapers}
+                    renderItem={(paper: any) => (
+                      <List.Item key={paper.id || paper.title}>
+                        <Card 
+                          size="small" 
+                          title={paper.title}
+                          extra={
+                            <Space>
+                              <Tag color="blue">
+                                {paper.published ? new Date(paper.published).toLocaleDateString() : 'No date'}
+                              </Tag>
+                              {paper.pdf_url && (
+                                <Button type="link" size="small" href={paper.pdf_url} target="_blank">
+                                  PDF
+                                </Button>
+                              )}
+                            </Space>
+                          }
+                          style={{ height: '100%' }}
+                        >
+                          <Typography.Paragraph
+                            ellipsis={{ rows: 3, tooltip: paper.summary }}
+                            style={{ fontSize: '12px' }}
+                          >
+                            {paper.summary || 'No summary available'}
+                          </Typography.Paragraph>
+                          <Space wrap size="small">
+                            {(() => {
+                              // Handle different author formats
+                              let authors = [];
+                              if (typeof paper.authors === 'string') {
+                                // If authors is a string, split by comma
+                                authors = paper.authors.split(',').map((author: string) => author.trim());
+                              } else if (Array.isArray(paper.authors)) {
+                                // If authors is already an array
+                                authors = paper.authors;
+                              }
+                              
+                              return authors.slice(0, 3).map((author: string, idx: number) => (
+                                <Tag key={idx}>{author}</Tag>
+                              ));
+                            })()}
+                            {(() => {
+                              let authorsCount = 0;
+                              if (typeof paper.authors === 'string') {
+                                authorsCount = paper.authors.split(',').length;
+                              } else if (Array.isArray(paper.authors)) {
+                                authorsCount = paper.authors.length;
+                              }
+                              
+                              return authorsCount > 3 && (
+                                <Tag>+{authorsCount - 3} more</Tag>
+                              );
+                            })()}
+                          </Space>
+                        </Card>
                       </List.Item>
                     )}
                   />

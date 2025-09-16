@@ -4,6 +4,8 @@ from app.models import Lab
 from sqlalchemy import or_
 import asyncio
 import threading
+import requests
+from xml.etree import ElementTree as ET
 from app.services.lab_paper_scraper import LabPaperScraper
 
 labs_bp = Blueprint('labs', __name__)
@@ -464,5 +466,66 @@ def get_labs_hierarchy():
             )
         })
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@labs_bp.route('/arxiv-latest', methods=['GET'])
+def get_latest_arxiv_papers():
+    """Get latest papers from ArXiv cs.RO category"""
+    try:
+        # ArXiv API endpoint for latest robotics papers
+        arxiv_url = 'https://export.arxiv.org/api/query?search_query=cat:cs.RO&start=0&max_results=10&sortBy=submittedDate&sortOrder=descending'
+        
+        response = requests.get(arxiv_url, timeout=10)
+        response.raise_for_status()
+        
+        # Parse XML response
+        root = ET.fromstring(response.content)
+        namespace = {'atom': 'http://www.w3.org/2005/Atom'}
+        
+        papers = []
+        for entry in root.findall('atom:entry', namespace):
+            # Extract paper information
+            id_elem = entry.find('atom:id', namespace)
+            title_elem = entry.find('atom:title', namespace)
+            summary_elem = entry.find('atom:summary', namespace)
+            published_elem = entry.find('atom:published', namespace)
+            updated_elem = entry.find('atom:updated', namespace)
+            
+            # Extract authors
+            authors = []
+            for author in entry.findall('atom:author', namespace):
+                name_elem = author.find('atom:name', namespace)
+                if name_elem is not None:
+                    authors.append(name_elem.text.strip())
+            
+            if id_elem is not None and title_elem is not None:
+                paper_id = id_elem.text
+                arxiv_id = paper_id.split('/')[-1]
+                
+                paper = {
+                    'id': arxiv_id,
+                    'title': title_elem.text.strip() if title_elem.text else '',
+                    'authors': ', '.join(authors),
+                    'abstract': summary_elem.text.strip() if summary_elem is not None and summary_elem.text else '',
+                    'publication_date': published_elem.text if published_elem is not None else '',
+                    'updated_date': updated_elem.text if updated_elem is not None else '',
+                    'arxiv_id': arxiv_id,
+                    'pdf_url': paper_id.replace('abs', 'pdf'),
+                    'arxiv_url': paper_id
+                }
+                papers.append(paper)
+        
+        return jsonify({
+            'papers': papers,
+            'total': len(papers),
+            'source': 'arxiv_cs_ro'
+        })
+        
+    except requests.RequestException as e:
+        return jsonify({'error': f'Failed to fetch from ArXiv: {str(e)}'}), 500
+    except ET.ParseError as e:
+        return jsonify({'error': f'Failed to parse ArXiv response: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
