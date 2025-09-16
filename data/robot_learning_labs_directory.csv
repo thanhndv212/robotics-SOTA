@@ -29,7 +29,14 @@ Robotics & AI Lab (Bagnell Lab),J. Andrew Bagnell,Carnegie Mellon University,Pit
 Robotics and Perception Group,Davide Scaramuzza,University of Zurich,Zurich,Switzerland,Vision-based learning for aerial robots and agile navigation,http://rpg.ifi.uzh.ch/
 Caltech Robotics & Vision Learning Lab,Pietro Perona (affiliated),Caltech,Pasadena,USA,Visual learning for manipulation and perception-driven policies,https://www.caltech.edu/academics/areas-of-study/robotics
 MIT Distributed Robotics Lab,Daniela Rus,MIT,Cambridge,USA,"Multi-robot learning, distributed control, swarm robotics",https://groups.csail.mit.edu/drl/
-Oxford Robotics Institute,Multiple PIs,University of Oxford,Oxford,UK,Embodied mapping & learning for navigation and long-term autonomy,https://ori.ox.ac.uk/
+Oxford Robotics Institute,Nick Hawes,University of Oxford,Oxford,UK,"Embodied mapping & learning for navigation and long-term autonomy; AI & Robotics; Director of the ORI; Principal Investigator - GOALS",https://ori.ox.ac.uk/
+Oxford Robotics Institute,Paul Newman,University of Oxford,Oxford,UK,"Embodied mapping & learning for navigation and long-term autonomy; BP Professor of Information Engineering; Principal Investigator - MRG",https://ori.ox.ac.uk/
+Oxford Robotics Institute,Ingmar Posner,University of Oxford,Oxford,UK,"Embodied mapping & learning for navigation and long-term autonomy; Professor of Applied AI; Principal Investigator - A2I",https://ori.ox.ac.uk/
+Oxford Robotics Institute,Maurice Fallon,University of Oxford,Oxford,UK,"Embodied mapping & learning for navigation and long-term autonomy; Professor of Robotics; Principal Investigator - DRS-P",https://ori.ox.ac.uk/
+Oxford Robotics Institute,Ioannis Havoutis,University of Oxford,Oxford,UK,"Embodied mapping & learning for navigation and long-term autonomy; Associate Professor in Engineering Science; Principal Investigator - DRS-C",https://ori.ox.ac.uk/
+Oxford Robotics Institute,Perla Maiolino,University of Oxford,Oxford,UK,"Embodied mapping & learning for navigation and long-term autonomy; Associate Professor in Engineering Science; Principal Investigator - SRL",https://ori.ox.ac.uk/
+Oxford Robotics Institute,Oiwi Parker Jones,University of Oxford,Oxford,UK,"Embodied mapping & learning for navigation and long-term autonomy; Hugh Price Fellow in Computer Science; Principal Investigator - PNPL",https://ori.ox.ac.uk/
+Oxford Robotics Institute,Daniele De Martini,University of Oxford,Oxford,UK,"Embodied mapping & learning for navigation and long-term autonomy; Departmental Lecturer; Principal Investigator - MRG",https://ori.ox.ac.uk/
 Cambridge Robot Learning & Active Vision,Multiple PIs,University of Cambridge,Cambridge,UK,"Active perception, robot learning for navigation",https://www.cam.ac.uk/research/robotics
 Max Planck Institute (MPI-IS Tübingen),Multiple PIs,MPI for Intelligent Systems,Tübingen,Germany,"Learning for manipulation, vision & interaction",https://www.is.mpg.de/
 Imperial Robotics & Learning Lab,Multiple PIs,Imperial College London,London,UK,"Mobile manipulation, embodied learning, perception-driven control",https://www.imperial.ac.uk/robotics/
@@ -149,3 +156,24 @@ Personal Robotics Lab,Siddhartha Srinivasa,University of Washington,Seattle,USA,
 Robot Learning Lab,Abhishek Gupta,University of Washington,Seattle,USA,"robot learning, reinforcement learning, generalization",https://robotlearning.cs.washington.edu/
 Robotics and State Estimation Lab,Dieter Fox,University of Washington,Seattle,USA,"state estimation, SLAM, perception",https://rse-lab.cs.washington.edu/
 Sensor Systems Laboratory,Joshua Smith,University of Washington,Seattle,USA,"sensor systems, wireless power, RFID",https://sensor.cs.washington.edu/
+SNU Robotics Laboratory,Frank Chongwoo Park,Seoul National University,Seoul,South Korea,"Robot modeling and identification; control; grasping and manipulation; motion planning; robot learning; machine learning and mathematical data science",https://sites.google.com/robotics.snu.ac.kr/fcp/home
+SNU Biorobotics Laboratory,Kyu-Jin Cho,Seoul National University,Seoul,South Korea,"Soft wearable robots; prosthetics; bio-inspired soft and deployable robots",https://www.biorobotics.snu.ac.kr/
+Wearable Robotics Laboratory,Jinsoo Kim,Seoul National University,Seoul,South Korea,"Enhancing mobility and independence for people with physical disabilities; development of exoskeletons and exosuits",https://sites.google.com/snu.ac.kr/jkim/
+Robust Perception & Mobile Robotics Lab,Ayoung Kim,Seoul National University,Seoul,South Korea,"Perception; SLAM; sensor fusion; mobile robotics; spatial representation learning",https://ayoungk.github.io/
+Human-Robot Interaction Lab,Ki-Uk Kyung,KAIST,Daejeon,South Korea,"Human-robot interaction; social robotics; how robots interact and collaborate with humans",http://irobot.kaist.ac.kr/
+Robotic Systems Control Lab,Kyoungchul Kong,KAIST,Daejeon,South Korea,"Control; exoskeletons and wearable robotics; assistive systems; robot systems control",http://robotics.kaist.ac.kr/
+Autonomous Vehicles & Electronics Lab,Seung-Hyun Kong,KAIST,Daejeon,South Korea,"Vehicle electronics; autonomy for vehicles; self-driving cars and sensors",http://ave.kaist.ac.kr/
+Telerobotics & Control Lab,Dong-Soo Kwon,KAIST,Daejeon,South Korea,"Telerobotics; human-robot interaction; haptics; control; teleoperation",http://robotics.kaist.ac.kr/
+Robotics and Computer Vision Lab,In So Kweon,KAIST,Daejeon,South Korea,"Computer vision; robotics; vision-based perception; SLAM",http://rcv.kaist.ac.kr/
+Vehicular Systems Design and Control Lab,Dongsuk Kum,KAIST,Daejeon,South Korea,"Vehicle design; control; autonomous vehicles and vehicle systems",http://vdclab.kaist.ac.kr/
+Mechatronics Systems and Control Lab,Kyung-soo Kim,KAIST,Daejeon,South Korea,"Mechatronics; system control; design of integrated robot and mechanical systems",http://msc.kaist.ac.kr/
+Intelligent Robotic Systems Lab,Min Jun Kim,KAIST,Daejeon,South Korea,"Intelligent robotics; perception; autonomy; robot learning; integration",https://sites.google.com/view/kaist-roboticslab
+Intelligent Mobile-Manipulation Lab,Beomjoon Kim,KAIST,Daejeon,South Korea,"Mobile manipulators; robotics with mobility and manipulation",http://imsquared.kaist.ac.kr/
+MORIN Lab,Jinwhan Kim,KAIST,Daejeon,South Korea,"Mobile robotics; autonomy; estimation; guidance and control for manned and unmanned systems",http://morin.kaist.ac.kr/
+Urban Robotics Lab,Hyun Myung,KAIST,Daejeon,South Korea,"Robotics in urban environments; infrastructure monitoring; sensing; automation in urban settings",http://urobot.kaist.ac.kr/
+IRAP Lab,Ayoung Kim,KAIST,Daejeon,South Korea,"Perception; autonomous navigation; mapping; robotics in civil and environmental applications",http://iraplab.kaist.ac.kr/
+Unmanned System Research Group,Hyunchul Shim,KAIST,Daejeon,South Korea,"UAVs; self-driving cars; unmanned systems; autonomy",http://unmanned.kaist.ac.kr/
+HuboLab,Junho Oh,KAIST,Daejeon,South Korea,"Humanoids; whole-body control; actuation; robot platforms for bipedal and quadrupedal robots",http://hubolab.kaist.ac.kr/
+LiCS Lab,Han-Lim Choi,KAIST,Daejeon,South Korea,"Estimation and control of networked and hybrid systems; multi-agent systems; UAVs; robotics control",http://lics.kaist.ac.kr/
+Human-Machine Interaction Lab,Yong-Hwa Park,KAIST,Daejeon,South Korea,"Interaction; sensors; human interfaces and human-machine systems",http://human.kaist.ac.kr/
+Dynamic Robot Control and Design Lab,Hae-Won Park,KAIST,Daejeon,South Korea,"Robot locomotion; dynamic control; design of robotic systems",https://www.dynamicrobot.kaist.ac.kr/

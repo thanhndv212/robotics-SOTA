@@ -164,6 +164,93 @@ def delete_lab(lab_id):
         return jsonify({'error': str(e)}), 500
 
 
+@labs_bp.route('/sync-csv', methods=['POST'])
+def sync_with_csv():
+    """Sync database with CSV file - updates existing entries and adds new ones"""
+    try:
+        import csv
+        import os
+        
+        csv_path = os.path.join(os.path.dirname(__file__), '../../../data/robot_learning_labs_directory.csv')
+        
+        if not os.path.exists(csv_path):
+            return jsonify({'error': 'CSV file not found'}), 404
+        
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            csv_labs = list(reader)
+        
+        updated_count = 0
+        added_count = 0
+        removed_count = 0
+        
+        # Create a mapping of CSV labs by name and PI for exact matching
+        csv_lab_map = {}
+        for row in csv_labs:
+            key = f"{row['Lab Name']}||{row['PI']}"
+            csv_lab_map[key] = row
+        
+        # Get all existing labs
+        existing_labs = Lab.query.all()
+        existing_lab_map = {}
+        for lab in existing_labs:
+            key = f"{lab.name}||{lab.pi}"
+            existing_lab_map[key] = lab
+        
+        # Update existing labs and add new ones
+        for key, csv_row in csv_lab_map.items():
+            if key in existing_lab_map:
+                # Update existing lab
+                lab = existing_lab_map[key]
+                lab.institution = csv_row['Institution']
+                lab.city = csv_row['City']
+                lab.country = csv_row['Country']
+                lab.focus_areas = csv_row['Focus']
+                lab.website = csv_row['Link']
+                updated_count += 1
+            else:
+                # Add new lab
+                lab = Lab(
+                    name=csv_row['Lab Name'],
+                    pi=csv_row['PI'],
+                    institution=csv_row['Institution'],
+                    city=csv_row['City'],
+                    country=csv_row['Country'],
+                    focus_areas=csv_row['Focus'],
+                    website=csv_row['Link']
+                )
+                db.session.add(lab)
+                added_count += 1
+        
+        # Remove old "Multiple PIs" entries that have been replaced with individual PIs
+        labs_with_individual_pis = {row['Lab Name'] for row in csv_labs if row['PI'] != 'Multiple PIs'}
+        multiple_pi_labs = Lab.query.filter(
+            Lab.pi == 'Multiple PIs',
+            Lab.name.in_(labs_with_individual_pis)
+        ).all()
+        
+        for lab in multiple_pi_labs:
+            db.session.delete(lab)
+            removed_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Database synced with CSV successfully',
+            'stats': {
+                'updated': updated_count,
+                'added': added_count,
+                'removed': removed_count,
+                'total_csv_labs': len(csv_labs),
+                'total_db_labs': Lab.query.count()
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
 @labs_bp.route('/stats', methods=['GET'])
 def get_lab_stats():
     """Get lab statistics"""

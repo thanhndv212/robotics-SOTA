@@ -119,7 +119,7 @@ with app.app_context():
     else:
         print('✅ Database already contains labs')
         
-        # Check if we need to update with new labs from CSV
+        # Option to sync with CSV (update existing entries)
         csv_path = '../data/robot_learning_labs_directory.csv'
         if os.path.exists(csv_path):
             with open(csv_path, 'r', encoding='utf-8') as f:
@@ -127,35 +127,36 @@ with app.app_context():
                 csv_labs = list(reader)
                 csv_count = len(csv_labs)
                 
-            if csv_count > lab_count:
-                print(f'📈 CSV has {csv_count} labs, database has {lab_count}')
-                print('🔄 Updating database with new labs...')
+            print(f'� CSV has {csv_count} labs, database has {lab_count}')
+            
+            # Auto-sync if CSV has significantly more entries or if explicitly requested
+            sync_needed = csv_count > lab_count + 5
+            if sync_needed:
+                print('🔄 Auto-syncing database with CSV (significant differences detected)...')
+                print('   This will update existing labs and add new ones.')
                 
-                # Get existing lab names to avoid duplicates
-                existing_labs = {lab.name for lab in Lab.query.all()}
+                # Run the sync via API call (assuming server will be running)
+                import requests
+                import time
                 
-                new_labs_added = 0
-                for row in csv_labs:
-                    if row['Lab Name'] not in existing_labs:
-                        lab = Lab(
-                            name=row['Lab Name'],
-                            pi=row['PI'],
-                            institution=row['Institution'],
-                            city=row['City'],
-                            country=row['Country'],
-                            focus_areas=row['Focus'],
-                            website=row['Link']
-                        )
-                        db.session.add(lab)
-                        new_labs_added += 1
+                # Small delay to ensure server starts
+                print('   Starting sync after backend initialization...')
+                time.sleep(2)
                 
-                if new_labs_added > 0:
-                    db.session.commit()
-                    print(f'✅ Added {new_labs_added} new labs to database')
-                else:
-                    print('✅ No new labs to add')
+                try:
+                    response = requests.post('http://127.0.0.1:8080/api/labs/sync-csv', timeout=30)
+                    if response.status_code == 200:
+                        result = response.json()
+                        print(f'   ✅ Sync completed: {result.get(\"stats\", {})}')
+                    else:
+                        print(f'   ⚠️ Sync failed: {response.text}')
+                except Exception as e:
+                    print(f'   ⚠️ Sync will be available via API endpoint: {e}')
             else:
-                print('✅ Database is up to date')
+                print('✅ Database appears up to date with CSV')
+                print('💡 You can manually sync anytime with: curl -X POST http://127.0.0.1:8080/api/labs/sync-csv')
+        else:
+            print('⚠️ CSV file not found for sync check')
     
     print('🗄️ Database setup complete!')
 "
