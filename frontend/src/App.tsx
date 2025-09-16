@@ -1963,71 +1963,89 @@ const App: React.FC = () => {
                   }
                 >
                   <List
-                    grid={{
-                      gutter: 16,
-                      xs: 1,
-                      sm: 1,
-                      md: 2,
-                      lg: 2,
-                      xl: 3,
-                      xxl: 4,
+                    itemLayout="vertical"
+                    size="large"
+                    pagination={{
+                      onChange: (page) => setCurrentPage(page),
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                      showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} papers`,
                     }}
                     dataSource={arxivPapers}
                     renderItem={(paper: any) => (
-                      <List.Item key={paper.id || paper.title}>
-                        <Card 
-                          size="small" 
-                          title={paper.title}
-                          extra={
+                      <List.Item
+                        key={paper.id || paper.title}
+                        actions={[
+                          <Space key="actions">
+                            {paper.pdf_url && (
+                              <Button
+                                type="link"
+                                icon={<FileTextOutlined />}
+                                href={paper.pdf_url}
+                                target="_blank"
+                                size="small"
+                              >
+                                PDF
+                              </Button>
+                            )}
+                            {paper.arxiv_url && (
+                              <Button
+                                type="link"
+                                href={paper.arxiv_url}
+                                target="_blank"
+                                size="small"
+                              >
+                                ArXiv
+                              </Button>
+                            )}
+                          </Space>
+                        ]}
+                        extra={
+                          <Space direction="vertical" align="end">
+                            <Tag color="blue">ArXiv cs.RO</Tag>
+                            <Tag color="green">New Submission</Tag>
+                            {paper.publication_date && (
+                              <Text type="secondary">
+                                <CalendarOutlined /> {new Date(paper.publication_date).toLocaleDateString()}
+                              </Text>
+                            )}
+                          </Space>
+                        }
+                      >
+                        <List.Item.Meta
+                          title={
                             <Space>
-                              <Tag color="blue">
-                                {paper.publication_date ? new Date(paper.publication_date).toLocaleDateString() : 'No date'}
-                              </Tag>
-                              {paper.pdf_url && (
-                                <Button type="link" size="small" href={paper.pdf_url} target="_blank">
-                                  PDF
-                                </Button>
+                              <Text strong style={{ fontSize: '16px' }}>
+                                {paper.title}
+                              </Text>
+                              <Tag color="orange">preprint</Tag>
+                            </Space>
+                          }
+                          description={
+                            <Space direction="vertical" style={{ width: '100%' }}>
+                              <Text>
+                                <strong>Authors:</strong> {formatAuthors(paper.authors)}
+                              </Text>
+                              <Text>
+                                <strong>ArXiv ID:</strong> {paper.arxiv_id}
+                              </Text>
+                              {paper.abstract && (
+                                <Paragraph
+                                  ellipsis={{ 
+                                    rows: 3, 
+                                    expandable: true, 
+                                    symbol: 'more',
+                                    onExpand: () => console.log('expanded')
+                                  }}
+                                  style={{ marginTop: 8 }}
+                                >
+                                  {paper.abstract}
+                                </Paragraph>
                               )}
                             </Space>
                           }
-                          style={{ height: '100%' }}
-                        >
-                          <Typography.Paragraph
-                            ellipsis={{ rows: 3, tooltip: paper.abstract }}
-                            style={{ fontSize: '12px' }}
-                          >
-                            {paper.abstract || 'No abstract available'}
-                          </Typography.Paragraph>
-                          <Space wrap size="small">
-                            {(() => {
-                              // Handle different author formats
-                              let authors = [];
-                              if (typeof paper.authors === 'string') {
-                                // If authors is a string, split by comma
-                                authors = paper.authors.split(',').map((author: string) => author.trim());
-                              } else if (Array.isArray(paper.authors)) {
-                                // If authors is already an array
-                                authors = paper.authors;
-                              }
-                              
-                              return authors.slice(0, 3).map((author: string, idx: number) => (
-                                <Tag key={idx}>{author}</Tag>
-                              ));
-                            })()}
-                            {(() => {
-                              let authorsCount = 0;
-                              if (typeof paper.authors === 'string') {
-                                authorsCount = paper.authors.split(',').length;
-                              } else if (Array.isArray(paper.authors)) {
-                                authorsCount = paper.authors.length;
-                              }
-                              
-                              return authorsCount > 3 && (
-                                <Tag>+{authorsCount - 3} more</Tag>
-                              );
-                            })()}
-                          </Space>
-                        </Card>
+                        />
                       </List.Item>
                     )}
                   />
