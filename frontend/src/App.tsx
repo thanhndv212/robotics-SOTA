@@ -1981,7 +1981,7 @@ const App: React.FC = () => {
                           extra={
                             <Space>
                               <Tag color="blue">
-                                {paper.published ? new Date(paper.published).toLocaleDateString() : 'No date'}
+                                {paper.publication_date ? new Date(paper.publication_date).toLocaleDateString() : 'No date'}
                               </Tag>
                               {paper.pdf_url && (
                                 <Button type="link" size="small" href={paper.pdf_url} target="_blank">
@@ -1993,10 +1993,10 @@ const App: React.FC = () => {
                           style={{ height: '100%' }}
                         >
                           <Typography.Paragraph
-                            ellipsis={{ rows: 3, tooltip: paper.summary }}
+                            ellipsis={{ rows: 3, tooltip: paper.abstract }}
                             style={{ fontSize: '12px' }}
                           >
-                            {paper.summary || 'No summary available'}
+                            {paper.abstract || 'No abstract available'}
                           </Typography.Paragraph>
                           <Space wrap size="small">
                             {(() => {

@@ -472,60 +472,136 @@ def get_labs_hierarchy():
 
 @labs_bp.route('/arxiv-latest', methods=['GET'])
 def get_latest_arxiv_papers():
-    """Get latest papers from ArXiv cs.RO category"""
+    """Get latest papers from ArXiv cs.RO daily new submissions"""
     try:
-        # ArXiv API endpoint for latest robotics papers
-        arxiv_url = 'https://export.arxiv.org/api/query?search_query=cat:cs.RO&start=0&max_results=10&sortBy=submittedDate&sortOrder=descending'
+        from bs4 import BeautifulSoup
+        from datetime import datetime
         
-        response = requests.get(arxiv_url, timeout=10)
+        # ArXiv new submissions page for cs.RO (daily new papers)
+        arxiv_url = 'https://arxiv.org/list/cs.RO/new'
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+        }
+        
+        response = requests.get(arxiv_url, headers=headers, timeout=10)
         response.raise_for_status()
         
-        # Parse XML response
-        root = ET.fromstring(response.content)
-        namespace = {'atom': 'http://www.w3.org/2005/Atom'}
+        # Parse HTML response
+        soup = BeautifulSoup(response.content, 'html.parser')
         
         papers = []
-        for entry in root.findall('atom:entry', namespace):
-            # Extract paper information
-            id_elem = entry.find('atom:id', namespace)
-            title_elem = entry.find('atom:title', namespace)
-            summary_elem = entry.find('atom:summary', namespace)
-            published_elem = entry.find('atom:published', namespace)
-            updated_elem = entry.find('atom:updated', namespace)
-            
-            # Extract authors
-            authors = []
-            for author in entry.findall('atom:author', namespace):
-                name_elem = author.find('atom:name', namespace)
-                if name_elem is not None:
-                    authors.append(name_elem.text.strip())
-            
-            if id_elem is not None and title_elem is not None:
-                paper_id = id_elem.text
-                arxiv_id = paper_id.split('/')[-1]
+        
+        # Find all paper entries - they're in <dd> tags following <dt> tags
+        paper_dts = soup.find_all('dt')
+        
+        for dt in paper_dts:
+            try:
+                # Get the corresponding dd element with paper details
+                dd = dt.find_next_sibling('dd')
+                if not dd:
+                    continue
+                
+                # Extract arXiv ID from dt
+                arxiv_link = dt.find('a', {'title': 'Abstract'})
+                if not arxiv_link:
+                    continue
+                    
+                arxiv_url_path = arxiv_link.get('href', '')
+                arxiv_id = arxiv_url_path.split('/')[-1] if arxiv_url_path else ''
+                if not arxiv_id:
+                    continue
+                
+                # Extract title
+                title_div = dd.find('div', class_='list-title')
+                if title_div:
+                    title = title_div.get_text().replace('Title:', '').strip()
+                else:
+                    # Fallback: look for the title in the first line
+                    title_elem = dd.find('span', class_='descriptor') or dd.find('strong')
+                    title = title_elem.get_text().strip() if title_elem else f"Paper {arxiv_id}"
+                
+                # Extract authors
+                authors_div = dd.find('div', class_='list-authors')
+                authors = []
+                if authors_div:
+                    authors_text = authors_div.get_text().replace('Authors:', '').strip()
+                    # Parse author links
+                    author_links = authors_div.find_all('a')
+                    if author_links:
+                        authors = [a.get_text().strip() for a in author_links]
+                    else:
+                        # Fallback: split by comma
+                        authors = [a.strip() for a in authors_text.split(',') if a.strip()]
+                
+                # Extract abstract/summary
+                # Look for the main text content - try multiple approaches
+                abstract = ''
+                
+                # First, try to find the paragraph with class="mathjax"
+                summary_elem = dd.find('p', class_='mathjax')
+                if summary_elem:
+                    abstract = summary_elem.get_text(strip=True)
+                
+                # If not found, try any paragraph that's not part of title/authors
+                if not abstract:
+                    paragraphs = dd.find_all('p')
+                    for p in paragraphs:
+                        text = p.get_text(strip=True)
+                        # Skip if it's too short or looks like metadata
+                        if len(text) > 50 and not text.lower().startswith(('subjects:', 'comments:', 'journal-ref:')):
+                            abstract = text
+                            break
+                
+                # Clean up common prefixes and formatting
+                if abstract:
+                    abstract = abstract.replace('Abstract:', '').strip()
+                    # Remove extra whitespace and normalize
+                    abstract = ' '.join(abstract.split())
+                
+                if not abstract:
+                    # Try to get any text content from dd that's not title/authors
+                    dd_text = dd.get_text()
+                    # Remove title and authors sections
+                    if 'Authors:' in dd_text:
+                        dd_text = dd_text.split('Authors:')[-1]
+                    if len(dd_text.strip()) > 100:
+                        abstract = dd_text.strip()[:500] + '...' if len(dd_text) > 500 else dd_text.strip()
+                
+                # Get current date for new submissions
+                published_date = datetime.now().isoformat()
                 
                 paper = {
                     'id': arxiv_id,
-                    'title': title_elem.text.strip() if title_elem.text else '',
-                    'authors': ', '.join(authors),
-                    'abstract': summary_elem.text.strip() if summary_elem is not None and summary_elem.text else '',
-                    'publication_date': published_elem.text if published_elem is not None else '',
-                    'updated_date': updated_elem.text if updated_elem is not None else '',
+                    'title': title,
+                    'authors': ', '.join(authors) if isinstance(authors, list) else str(authors),
+                    'abstract': abstract,
+                    'publication_date': published_date,
+                    'updated_date': published_date,
                     'arxiv_id': arxiv_id,
-                    'pdf_url': paper_id.replace('abs', 'pdf'),
-                    'arxiv_url': paper_id
+                    'pdf_url': f'https://arxiv.org/pdf/{arxiv_id}.pdf',
+                    'arxiv_url': f'https://arxiv.org/abs/{arxiv_id}'
                 }
                 papers.append(paper)
+                
+                # Limit to reasonable number
+                if len(papers) >= 15:
+                    break
+                    
+            except Exception as e:
+                # Skip this paper if there's an error parsing it
+                print(f"Error parsing paper {arxiv_id if 'arxiv_id' in locals() else 'unknown'}: {e}")
+                continue
         
         return jsonify({
             'papers': papers,
             'total': len(papers),
-            'source': 'arxiv_cs_ro'
+            'source': 'arxiv_cs_ro_new'
         })
         
     except requests.RequestException as e:
         return jsonify({'error': f'Failed to fetch from ArXiv: {str(e)}'}), 500
-    except ET.ParseError as e:
-        return jsonify({'error': f'Failed to parse ArXiv response: {str(e)}'}), 500
+    except ImportError as e:
+        return jsonify({'error': f'BeautifulSoup not available: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
