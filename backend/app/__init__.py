@@ -44,11 +44,9 @@ def create_app(config_name='development'):
     from app.api.labs import labs_bp
     from app.api.papers import papers_bp
     from app.api.trends import trends_bp
-    from app.api.paper_viewer import paper_viewer_bp
     
     app.register_blueprint(labs_bp, url_prefix='/api/labs')
     app.register_blueprint(papers_bp, url_prefix='/api/papers')
     app.register_blueprint(trends_bp, url_prefix='/api/trends')
-    app.register_blueprint(paper_viewer_bp, url_prefix='/paper_viewer')
     
     return app

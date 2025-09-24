@@ -1,0 +1,3 @@
+title,authors,abstract,venue,year,doi,url
+"A Test Paper on Robotics","Doe, John;Smith, Jane","This paper explores testing imports.","TestConf",2025,10.1234/testdoi,http://example.com/testpaper
+"Another Test Paper","Lee, Alice","Another example abstract.","TestJournal",2024,10.2345/anotherdoi,http://example.com/another

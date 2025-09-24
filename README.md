@@ -13,7 +13,6 @@ A comprehensive full-stack system for mapping and analyzing global robotics rese
 - **Advanced Search**: Multi-dimensional filtering by location, research focus, and institution
 - **Research Analytics**: Track research areas including robot learning, manipulation, perception
 - **Citation Networks**: Analyze collaboration patterns and geographic research clusters
-- **Paper Viewer**: Browse, search, and filter 333+ system identification papers with full-text search
 
 ## 🏗️ Architecture
 
@@ -22,7 +21,7 @@ robotics-SOTA/
 ├── backend/          # Python Flask backend (✅ Complete)
 │   ├── app/
 │   │   ├── models/   # SQLAlchemy database models
-│   │   ├── api/      # REST API endpoints (labs, papers, trends, paper_viewer)
+│   │   ├── api/      # REST API endpoints (labs, papers, trends)
 │   │   ├── services/ # Lab data import, paper tracking, paper extraction
 │   │   └── __init__.py # Flask app factory
 │   ├── run_dev.py    # Development server
@@ -33,7 +32,7 @@ robotics-SOTA/
 │   │   ├── services/   # API integration
 │   │   └── App.tsx     # Main application
 │   └── package.json
-├── data/            # Lab directory CSV + extracted papers markdown
+├── data/            # Lab directory CSV
 ├── scripts/         # Database setup and import tools
 ├── docs/           # API documentation
 └── tests/          # Unit tests
@@ -139,25 +138,6 @@ npm start           # Start development server
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://127.0.0.1:8080
 - **Lab Data**: http://127.0.0.1:8080/api/labs
-- **Paper Viewer**: http://127.0.0.1:8080/paper_viewer/
-
-## 📚 Paper Viewer
-
-The system includes a comprehensive paper viewer for browsing and searching 333+ system identification papers. This feature was migrated from the SysID-for-robot-learning-papers project.
-
-### Features
-- **Full-text Search**: Search across paper titles, authors, abstracts, and content
-- **Category Filtering**: Browse papers by research categories (7 categories available)
-- **Tag-based Filtering**: Filter by specific research tags and methods
-- **Detailed Paper View**: Complete paper information including contributions, methods, and links
-- **Export Functionality**: Export filtered results as JSON for further analysis
-
-### API Endpoints
-- **Web Interface**: `/paper_viewer/` - Interactive search and browse interface
-- **Search API**: `/paper_viewer/api/search` - JSON API for programmatic access
-- **Paper Details**: `/paper_viewer/paper/<id>` - Individual paper details
-- **Category View**: `/paper_viewer/category/<name>` - Papers by category
-- **Export**: `/paper_viewer/export` - Export filtered results
 
 ## 🎛️ User Interface Controls
 
