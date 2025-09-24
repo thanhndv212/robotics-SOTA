@@ -336,14 +336,14 @@ def delete_paper(paper_id):
     """Delete a paper"""
     try:
         paper = Paper.query.get_or_404(paper_id)
-        
+
         # Store paper info for response
         paper_title = paper.title
         lab_name = paper.lab.name if paper.lab else 'Unknown'
-        
+
         db.session.delete(paper)
         db.session.commit()
-        
+
         return jsonify({
             'message': f'Paper "{paper_title}" deleted successfully',
             'deleted_paper': {
@@ -352,7 +352,51 @@ def delete_paper(paper_id):
                 'lab': lab_name
             }
         })
-        
+
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+@papers_bp.route("/import", methods=["POST"])
+def import_papers():
+    """Import papers from a CSV file"""
+    try:
+        if "file" not in request.files:
+            return jsonify({"error": "No file provided"}), 400
+
+        file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"error": "No selected file"}), 400
+
+        # Process the CSV file
+        import csv
+
+        stream = file.stream.read().decode("utf-8").splitlines()
+        reader = csv.DictReader(stream)
+
+        for row in reader:
+            try:
+                publication_date = None
+                if row.get("year"):
+                    publication_date = datetime.strptime(
+                        row["year"], "%Y"
+                    ).date()
+
+                paper = Paper(
+                    title=row.get("title"),
+                    authors=row.get("authors"),
+                    publication_date=publication_date,
+                    venue=row.get("journal"),
+                    doi=row.get("doi"),
+                )
+                db.session.add(paper)
+            except Exception as e:
+                print(f"Error processing row: {row}, Error: {e}")
+
+        db.session.commit()
+        return jsonify({"message": "Papers imported successfully"}), 200
+
+    except Exception as e:
+        print(f"Error in import_papers: {e}")
+        return jsonify({"error": str(e)}), 500

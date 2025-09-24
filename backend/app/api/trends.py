@@ -14,16 +14,16 @@ def get_trends():
         period = request.args.get('period', '1year')
         research_area = request.args.get('research_area')
         limit = request.args.get('limit', 50, type=int)
-        
+
         query = Trend.query
-        
+
         if research_area:
             query = query.filter(Trend.research_area == research_area)
-        
+
         trends = query.order_by(desc(Trend.trend_score)).limit(limit).all()
-        
-        return jsonify([trend.to_dict() for trend in trends])
-        
+
+        return jsonify({"trends": [trend.to_dict() for trend in trends]})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

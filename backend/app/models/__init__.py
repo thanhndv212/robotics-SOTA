@@ -5,7 +5,7 @@ import json
 
 class Lab(db.Model):
     __tablename__ = 'labs'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     pi = db.Column(db.String(100), nullable=True)
@@ -21,7 +21,7 @@ class Lab(db.Model):
     funding_sources = db.Column(db.Text, nullable=True)  # JSON string
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Hierarchical fields
     parent_lab_id = db.Column(
         db.Integer,
@@ -32,7 +32,7 @@ class Lab(db.Model):
         db.String(50),
         default='independent'
     )  # 'independent', 'group', 'department'
-    
+
     # Relationships
     papers = db.relationship('Paper', backref='lab', lazy=True)
     researchers = db.relationship('Researcher', backref='lab', lazy=True)
@@ -41,17 +41,19 @@ class Lab(db.Model):
         backref=db.backref('parent_lab', remote_side=[id]),
         lazy='dynamic'
     )
-    
+
     @property
     def focus_areas_list(self):
         """Get focus areas as list"""
         if self.focus_areas:
             try:
                 return json.loads(self.focus_areas)
-            except:
+            except Exception as e:
+                # Handle exception properly
+                print(e)
                 return []
         return []
-    
+
     @focus_areas_list.setter
     def focus_areas_list(self, value):
         """Set focus areas from list"""
@@ -59,17 +61,19 @@ class Lab(db.Model):
             self.focus_areas = json.dumps(value)
         else:
             self.focus_areas = None
-    
+
     @property
     def funding_sources_list(self):
         """Get funding sources as list"""
         if self.funding_sources:
             try:
                 return json.loads(self.funding_sources)
-            except:
+            except Exception as e:
+                # Handle exception properly
+                print(e)
                 return []
         return []
-    
+
     @funding_sources_list.setter
     def funding_sources_list(self, value):
         """Set funding sources from list"""
@@ -77,7 +81,7 @@ class Lab(db.Model):
             self.funding_sources = json.dumps(value)
         else:
             self.funding_sources = None
-    
+
     def to_dict(self, include_papers=False, include_sub_groups=False):
         result = {
             'id': self.id,
@@ -103,7 +107,7 @@ class Lab(db.Model):
                 self.updated_at.isoformat() if self.updated_at else None
             )
         }
-        
+
         if include_papers:
             # Sort papers by publication_date in descending order (latest first)
             sorted_papers = sorted(
@@ -113,19 +117,19 @@ class Lab(db.Model):
             )
             result['papers'] = [paper.to_dict() for paper in sorted_papers]
             result['paper_count'] = len(self.papers)
-        
+
         if include_sub_groups:
             result['sub_groups'] = [
                 group.to_dict() for group in self.sub_groups
             ]
             result['sub_groups_count'] = self.sub_groups.count()
-        
+
         return result
 
 
 class Paper(db.Model):
     __tablename__ = 'papers'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(500), nullable=False)
     authors = db.Column(db.Text, nullable=False)  # JSON string
@@ -141,13 +145,22 @@ class Paper(db.Model):
     research_areas = db.Column(db.Text, nullable=True)  # JSON string
     keywords = db.Column(db.Text, nullable=True)  # JSON string
     lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow(),
+        onupdate=datetime.utcnow(),
+    )
+
     # Relationships
-    citations = db.relationship('Citation', foreign_keys='Citation.citing_paper_id', backref='citing_paper', lazy=True)
+    citations = db.relationship(
+        "Citation",
+        foreign_keys="Citation.citing_paper_id",
+        backref="citing_paper",
+        lazy=True,
+    )
     cited_by = db.relationship('Citation', foreign_keys='Citation.cited_paper_id', backref='cited_paper', lazy=True)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -171,7 +184,7 @@ class Paper(db.Model):
 
 class Researcher(db.Model):
     __tablename__ = 'researchers'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(200), nullable=True)
@@ -182,9 +195,13 @@ class Researcher(db.Model):
     homepage = db.Column(db.String(500), nullable=True)
     h_index = db.Column(db.Integer, nullable=True)
     lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow(),
+        onupdate=datetime.utcnow(),
+    )
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -204,7 +221,7 @@ class Researcher(db.Model):
 
 class Citation(db.Model):
     __tablename__ = 'citations'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     citing_paper_id = db.Column(db.Integer, db.ForeignKey('papers.id'), nullable=False)
     cited_paper_id = db.Column(db.Integer, db.ForeignKey('papers.id'), nullable=False)
@@ -215,7 +232,7 @@ class Citation(db.Model):
 
 class Trend(db.Model):
     __tablename__ = 'trends'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     research_area = db.Column(db.String(100), nullable=False)
     keyword = db.Column(db.String(100), nullable=False)
