@@ -318,16 +318,10 @@ npm test  # Frontend tests
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
-## 📄 License
+## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
 
-## 🤝 Acknowledgments
+## 🤝 Contributing
 
-- Robotics research community for open data sharing
-- arXiv for providing open access to research papers
-- Mapbox for geographic visualization capabilities
-
----
-
-**Status**: 🚧 Under Development | **Version**: 1.0.0-alpha
+Contributions are welcome! Please fork the repository and submit a pull request with your changes. For major changes, please open an issue first to discuss what you would like to change.
