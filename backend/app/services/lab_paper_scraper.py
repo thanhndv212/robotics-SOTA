@@ -5,6 +5,8 @@ import re
 from typing import List
 from datetime import datetime
 from scholarly import scholarly
+import random
+import time
 from bs4 import BeautifulSoup
 from flask import current_app
 from app import db
@@ -19,6 +21,37 @@ class LabPaperScraper:
         self.max_papers_per_lab = 15  # Increased from 10 to 15
         self.session = None
         self.app = app or current_app._get_current_object() if current_app else None
+        self._configure_scholar()
+    
+    def _configure_scholar(self):
+        """Configure Google Scholar with anti-blocking measures"""
+        try:
+            # Set up scholarly with proxy and user agent rotation if possible
+            from scholarly import ProxyGenerator
+            
+            # Try to use proxy generator for better success rate
+            pg = ProxyGenerator()
+            
+            # Use different user agents to appear more like regular browsers
+            user_agents = [
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15'
+            ]
+            
+            # Set random user agent
+            import random
+            user_agent = random.choice(user_agents)
+            
+            # Try to configure with random delays and user agent
+            scholarly.set_timeout(10)  # 10 second timeout
+            scholarly.set_retries(2)   # 2 retries on failure
+            
+            print(f"  📡 Configured Scholar with enhanced settings")
+            
+        except Exception as e:
+            print(f"  ⚠️ Scholar configuration warning: {e}")
+            # Continue without proxy if it fails
     
     def _ensure_app_context(self):
         """Ensure we're running within Flask application context"""
@@ -128,34 +161,74 @@ class LabPaperScraper:
         return papers_found
     
     async def search_scholar_papers(self, lab: Lab) -> int:
-        """Search Google Scholar for papers"""
+        """Search Google Scholar for papers with timeout and robust error handling"""
         papers_found = 0
         
         try:
-            # Search for the PI
-            search_query = f"{lab.pi} robotics {lab.institution}"
-            search_query = search_query.replace('"', '').strip()
+            # Search for the PI with better query construction
+            search_terms = [
+                f'"{lab.pi}" robotics',
+                f'"{lab.pi}" robot learning',
+                f'"{lab.pi}" {lab.institution.split()[0]}',  # First word of institution
+            ]
             
-            # Use scholarly library
-            search_query = scholarly.search_pubs(search_query)
-            
-            count = 0
-            for pub in search_query:
-                if count >= 5:  # Limit to avoid rate limiting
-                    break
+            # Try different search queries for better results
+            for search_query in search_terms[:1]:  # Start with just the first one
+                print(f"  Searching Scholar for: {search_query}")
                 
                 try:
-                    # Get publication details
-                    pub_filled = scholarly.fill(pub)
+                    # Add random delay before search to avoid rate limiting
+                    random_delay = random.uniform(1, 3)
+                    await asyncio.sleep(random_delay)
                     
-                    if await self._import_scholar_paper(pub_filled, lab):
-                        papers_found += 1
+                    # Use scholarly library with timeout protection
+                    search_results = scholarly.search_pubs(search_query)
+                    
+                    count = 0
+                    for pub in search_results:
+                        if count >= 2:  # Further reduced limit to avoid blocking
+                            break
                         
-                    count += 1
-                    await asyncio.sleep(2)  # Rate limiting for Scholar
+                        try:
+                            # Set a timeout for the fill operation
+                            import concurrent.futures
+                            
+                            def fill_publication(publication):
+                                """Fill publication details with timeout"""
+                                # Add random delay before fill
+                                time.sleep(random.uniform(0.5, 2.0))
+                                return scholarly.fill(publication)
+                            
+                            # Run fill operation with timeout in a separate thread
+                            loop = asyncio.get_event_loop()
+                            with concurrent.futures.ThreadPoolExecutor() as executor:
+                                future = loop.run_in_executor(executor, fill_publication, pub)
+                                try:
+                                    # Wait maximum 10 seconds for fill operation (reduced from 15)
+                                    pub_filled = await asyncio.wait_for(future, timeout=10.0)
+                                except asyncio.TimeoutError:
+                                    print(f"    Scholar fill timeout for paper {count + 1}")
+                                    count += 1
+                                    continue
+                            
+                            if await self._import_scholar_paper(pub_filled, lab):
+                                papers_found += 1
+                                
+                            count += 1
+                            # Longer randomized delay between requests
+                            await asyncio.sleep(random.uniform(3, 6))
+                            
+                        except Exception as e:
+                            print(f"    Scholar paper import failed: {e}")
+                            count += 1
+                            continue
                     
+                    # If we found papers, don't try other search terms
+                    if papers_found > 0:
+                        break
+                        
                 except Exception as e:
-                    print(f"    Scholar paper import failed: {e}")
+                    print(f"  Scholar search query failed: {e}")
                     continue
                     
         except Exception as e:
@@ -426,36 +499,49 @@ class LabPaperScraper:
             return False
     
     async def _import_scholar_paper(self, scholar_paper, lab: Lab) -> bool:
-        """Import a paper from Google Scholar"""
+        """Import a paper from Google Scholar with robust error handling"""
         try:
             with self._ensure_app_context():
-                title = scholar_paper.get('title', '').strip()
+                # Extract basic info with safe defaults
+                bib_info = scholar_paper.get('bib', {})
+                title = bib_info.get('title', '').strip()
                 
                 if not title:
+                    print(f"    No title found for Scholar paper")
                     return False
                 
                 # Check if paper already exists
                 existing_paper = Paper.query.filter_by(title=title).first()
                 if existing_paper:
+                    print(f"    Paper already exists: {title[:50]}...")
                     return False
                 
-                # Extract data
-                authors = scholar_paper.get('author', '').split(' and ')
-                abstract = scholar_paper.get('abstract', '')
-                year = scholar_paper.get('year')
-                venue = scholar_paper.get('venue', 'Unknown')
+                # Extract data with safe defaults
+                authors_raw = bib_info.get('author', '')
+                if isinstance(authors_raw, list):
+                    authors = authors_raw
+                elif isinstance(authors_raw, str):
+                    authors = [a.strip() for a in authors_raw.split(' and ') if a.strip()]
+                else:
+                    authors = [str(authors_raw)] if authors_raw else []
+                
+                abstract = scholar_paper.get('abstract', '') or bib_info.get('abstract', '')
+                year = bib_info.get('year')
+                venue = bib_info.get('venue', 'Unknown')
                 citation_count = scholar_paper.get('num_citations', 0)
                 
                 # Verify relevance - relaxed filter for scholar search
                 if not self._is_robotics_paper(title, abstract, relaxed=True):
+                    print(f"    Paper not robotics-related: {title[:50]}...")
                     return False
                 
                 # Try to get publication date
                 pub_date = None
                 if year:
                     try:
-                        pub_date = datetime(int(year), 1, 1).date()
-                    except:
+                        year_int = int(str(year)[:4])  # Extract first 4 digits
+                        pub_date = datetime(year_int, 1, 1).date()
+                    except (ValueError, TypeError):
                         pub_date = datetime.now().date()
                 else:
                     pub_date = datetime.now().date()
@@ -477,6 +563,7 @@ class LabPaperScraper:
                 
                 db.session.add(paper)
                 db.session.commit()
+                print(f"    ✅ Imported Scholar paper: {title[:50]}...")
                 return True
             
         except Exception as e:

@@ -672,7 +672,7 @@ def get_latest_arxiv_papers():
                 papers.append(paper)
                 
                 # Limit to reasonable number
-                if len(papers) >= 15:
+                if len(papers) >= 100:
                     break
                     
             except Exception as e:
