@@ -1,0 +1,48 @@
+{% extends "paper_viewer/base.html" %}
+
+{% block title %}{{ category }} - Paper Viewer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="mb-3">
+        <a href="{{ url_for('paper_viewer.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Search
+        </a>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ category }}</h2>
+        <span class="badge bg-primary fs-6">{{ count }} papers</span>
+    </div>
+
+    <div class="row">
+        {% for paper in papers %}
+        <div class="col-md-6 mb-3">
+            <div class="card paper-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        {% if paper.url %}
+                        <a href="{{ paper.url }}" target="_blank" class="text-decoration-none">{{ paper.title }}</a>
+                        {% else %}
+                        {{ paper.title }}
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-users me-1"></i>{{ paper.authors | join(', ') }}
+                    </p>
+                    <p class="card-text">{{ paper.summary[:150] + '...' if paper.summary|length > 150 else paper.summary }}</p>
+                    <div class="mb-2">
+                        {% for tag in paper.tags %}
+                        <span class="badge bg-light text-dark tag-badge">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    <a href="{{ url_for('paper_viewer.paper_detail', paper_id=paper.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i>View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
