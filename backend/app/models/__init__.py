@@ -226,7 +226,7 @@ class Citation(db.Model):
     citing_paper_id = db.Column(db.Integer, db.ForeignKey('papers.id'), nullable=False)
     cited_paper_id = db.Column(db.Integer, db.ForeignKey('papers.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     __table_args__ = (db.UniqueConstraint('citing_paper_id', 'cited_paper_id'),)
 
 
@@ -242,7 +242,7 @@ class Trend(db.Model):
     period_end = db.Column(db.Date, nullable=False)
     trend_score = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
