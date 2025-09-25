@@ -34,6 +34,8 @@ ENV/
 *.swp
 *.swo
 *~
+.github/
+.git/
 
 # Flask
 instance/
