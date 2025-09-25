@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from backend.app import create_app
-from backend.app.models import Lab
+from app import create_app
+from app.models import Lab
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
