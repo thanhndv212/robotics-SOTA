@@ -1,314 +1,508 @@
 # Robotics SOTA - Interactive Research Trends Mapping System
 
-A comprehensive full-stack system for mapping and analyzing global robotics research trends with interactive geographic visualization, automated paper tracking, and AI-powered trend analysis.
+A comprehensive full-stack system for mapping and analyzing global robotics research trends with real-time data visualization, automated paper tracking, and research analytics.
 
 ## 🚀 Features
 
-- **Interactive Geographic Map**: Visualize 47+ robotics labs worldwide with Mapbox integration
-- **Hierarchical Lab Organization**: Multi-level lab structure with departments and research groups
-- **Institution Grouping**: Group and organize labs by institution for better navigation
-- **Research Group Management**: Create and manage specific research groups within larger institutions
-- **Real-time Database**: SQLite/PostgreSQL with comprehensive lab, paper, and researcher data
-- **REST API**: Complete backend API for labs, papers, trends, and statistics
-- **Advanced Search**: Multi-dimensional filtering by location, research focus, and institution
-- **Research Analytics**: Track research areas including robot learning, manipulation, perception
-- **Citation Networks**: Analyze collaboration patterns and geographic research clusters
+- **Modern Web Dashboard**: Next.js 14 + Tailwind CSS with server-side rendering
+- **171 Global Labs**: Comprehensive directory of robotics research labs worldwide
+- **Real-time Database**: SQLite with 171 labs across 24 countries, ready for paper tracking
+- **REST API**: Complete Flask backend API for labs, papers, trends, and statistics
+- **Advanced Search & Filtering**: Multi-dimensional filtering by location, research focus, and institution
+- **Research Analytics**: Track research areas including robot learning, manipulation, perception, sim2real
+- **Responsive UI**: Clean, modern interface with lab cards, metrics, and detailed views
+- **Geographic Coverage**: Labs from USA (60), South Korea (26), Canada (10), China, Japan, UK, and 18+ more countries
 
 ## 🏗️ Architecture
 
 ```
 robotics-SOTA/
-├── backend/          # Python Flask backend (✅ Complete)
+├── backend/          # Python Flask backend (✅ Complete & Running)
 │   ├── app/
-│   │   ├── models/   # SQLAlchemy database models
-│   │   ├── api/      # REST API endpoints (labs, papers, trends)
-│   │   ├── services/ # Lab data import, paper tracking, paper extraction
-│   │   └── __init__.py # Flask app factory
-│   ├── run_dev.py    # Development server
+│   │   ├── models/   # SQLAlchemy database models (Lab, Paper, Researcher)
+│   │   ├── api/      # REST API endpoints (labs, papers, trends, statistics)
+│   │   ├── services/ # Lab importer, paper scraper, analytics
+│   │   └── __init__.py # Flask app factory with CORS
+│   ├── instance/
+│   │   └── robotics_sota.db # SQLite database (171 labs)
+│   ├── run_dev.py    # Development server with auto-import
 │   └── requirements.txt
-├── frontend/         # React + TypeScript frontend (✅ Structure Ready)
-│   ├── src/
-│   │   ├── components/ # Interactive map, lab details
-│   │   ├── services/   # API integration
-│   │   └── App.tsx     # Main application
+├── frontend/         # Next.js 14 + Tailwind CSS (✅ Complete & Production Ready)
+│   ├── app/
+│   │   ├── layout.tsx    # Root layout with metadata
+│   │   ├── page.tsx      # Home page
+│   │   └── globals.css   # Global Tailwind styles
+│   ├── components/
+│   │   └── dashboard/    # Lab dashboard components
+│   │       ├── LabsDashboard.tsx  # Main orchestrator
+│   │       ├── MetricsSummary.tsx # Statistics cards
+│   │       ├── LabFilters.tsx     # Search & filters
+│   │       ├── LabList.tsx        # Grid container
+│   │       └── LabCard.tsx        # Individual lab display
+│   ├── lib/
+│   │   └── api.ts        # Backend API client
+│   ├── types/
+│   │   └── lab.ts        # TypeScript interfaces
+│   ├── next.config.mjs   # Next.js configuration
+│   ├── tailwind.config.ts # Tailwind configuration
 │   └── package.json
-├── data/            # Lab directory CSV
-├── scripts/         # Database setup and import tools
+├── data/            # Lab directory CSV (178 labs source data)
+│   └── robot_learning_labs_directory.csv
+├── scripts/         # Database setup tools
 ├── docs/           # API documentation
+├── start-dev.sh    # One-command development launcher
 └── tests/          # Unit tests
 ```
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 18, TypeScript, Ant Design, Mapbox GL JS, D3.js
-- **Backend**: Python 3.12, Flask, SQLAlchemy, SQLite (dev) / PostgreSQL (prod)
-- **Data Processing**: pandas, JSON storage, geocoding APIs
-- **Development**: VS Code, conda environment, GitHub
-- **Deployment**: Docker ready, Railway/Heroku compatible
+### Frontend
+- **Framework**: Next.js 14.2.33 (App Router, React 18.2)
+- **Language**: TypeScript 5.4.5
+- **Styling**: Tailwind CSS 3.4.4 (utility-first CSS)
+- **HTTP Client**: Axios 1.7.9
+- **Build**: SWC compiler, automatic code splitting
+- **Rendering**: SSR/SSG/ISR support, edge deployment ready
+
+### Backend
+- **Language**: Python 3.12+
+- **Framework**: Flask with CORS support
+- **Database**: SQLAlchemy ORM with SQLite (dev) / PostgreSQL (prod ready)
+- **Data Processing**: pandas for CSV import, JSON serialization
+- **API**: RESTful endpoints with query parameter filtering
+
+### Development
+- **Environment**: conda/venv for Python, npm for Node.js
+- **Tools**: VS Code, ESLint, Git
+- **Scripts**: Automated development launcher (`start-dev.sh`)
+- **Deployment**: Docker ready, Railway/Vercel/Heroku compatible
 
 ## 📊 Current Database
 
-**47 Leading Robotics Research Labs** including:
-- **US West**: UC Berkeley (3 labs), Stanford IRIS, Caltech
-- **US East**: MIT (2 labs), CMU Robotics Institute, Harvard  
-- **Europe**: Oxford, Cambridge, Imperial College, EPFL, ETH Zurich, Max Planck
-- **Asia**: University of Tokyo (3 labs), Tsinghua, KAIST, NTU Singapore
-- **Global Coverage**: 12+ countries across North America, Europe, and Asia
+**171 Leading Robotics Research Labs** including:
 
-**Research Focus Areas**: Deep RL, manipulation, perception, sim2real, human-robot interaction, legged locomotion, autonomous systems, industrial robotics
+### Geographic Distribution (24 Countries)
+- **USA**: 60 labs (35%) - UC Berkeley, Stanford, MIT, CMU, and more
+- **South Korea**: 26 labs (15%) - KAIST, Seoul National University, GIST
+- **Canada**: 10 labs (6%) - University of Toronto, McGill, UBC, Vector Institute
+- **China**: 8 labs - Tsinghua, Peking University, Shanghai Jiao Tong
+- **Japan**: 8 labs - University of Tokyo, RIKEN, Waseda, Osaka University
+- **UK**: 8 labs - Oxford, Cambridge, Imperial College, Edinburgh
+- **Germany**: 7 labs - TUM, RWTH Aachen, Max Planck, Karlsruhe
+- **India**: 6 labs - IIT Bombay, IIT Delhi, IIT Madras, IISc
+- **France**: 5 labs - INRIA, LAAS-CNRS, Sorbonne
+- **Switzerland**: 5 labs - EPFL, ETH Zurich, University of Zurich
+- **Plus 14 more countries**: Australia, Singapore, Israel, Netherlands, Italy, and more
 
-## 🏛️ Lab Organization System
+### Top Research Focus Areas
+1. **Perception** - 10 labs
+2. **Manipulation** - 8 labs  
+3. **Sim2real** - 7 labs
+4. **Human-Robot Interaction** - 5 labs
+5. **Embodied AI** - 4 labs
+6. **Robot Learning, Grasping, Autonomous Systems** - Multiple labs each
 
-### Hierarchical Structure
-The system supports multi-level lab organization to handle complex institutional structures:
-
-- **Independent Labs**: Single research groups with individual PIs
-- **Department Labs**: Parent institutions containing multiple research groups
-- **Research Groups**: Specific sub-groups within larger institutions
-
-### Features
-- **Hierarchy Toggle**: Switch between flat view (all labs) and hierarchical view (departments → groups)
-- **Institution Grouping**: Group labs by institution to see research concentration
-- **Research Group Management**: Create, edit, and manage research groups within departments
-- **Flexible Display**: Choose between card view and list view for different data densities
-
-### Example Structure
-```
-Carnegie Mellon University (Department)
-├── Robot Learning Lab (PI: Deepak Pathak)
-├── Manipulation Lab (PI: Matthew Mason)
-└── Field Robotics Center (PI: Red Whittaker)
-
-MIT (Department)
-├── Computer Science and Artificial Intelligence Laboratory
-└── Distributed Robotics Laboratory
-```
-
-This solves the "multiple PIs" problem by organizing large institutions into specific research groups with individual PIs and focus areas.
+### Notable Labs Include
+- **Berkeley Robot Learning Lab (RLL)** - Pieter Abbeel
+- **Levine Lab / Robot Learning** - Sergey Levine, UC Berkeley
+- **Stanford IRIS** - Chelsea Finn, Stanford
+- **MIT Robot Locomotion & Learning** - Russ Tedrake
+- **RobIn Lab** - Roberto Martín-Martín, UT Austin
+- **CMU Robotics Institute** - Multiple research groups
+- **And 165+ more world-leading robotics labs**
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Python 3.8+** (conda recommended)
-- **Node.js 16+** and npm
+- **Python 3.9+** (conda recommended for environment management)
+- **Node.js 18+** and npm
 - **Git**
 
-### Option 1: One-Command Setup 🎯
+### Option 1: One-Command Setup 🎯 (Recommended)
 ```bash
-git clone <repository-url>
+git clone https://github.com/thanhndv212/robotics-SOTA.git
 cd robotics-SOTA
-./start-dev.sh  # Starts both backend and frontend
+bash start-dev.sh  # Starts both backend and frontend automatically
 ```
+
+This script will:
+1. ✅ Check Python and Node.js prerequisites
+2. 🐍 Start Flask backend on port 8080
+3. 📥 Auto-import 171 labs from CSV (first run only)
+4. ⚛️ Start Next.js frontend on port 3000
+5. 🎉 Open your browser to http://localhost:3000
 
 ### Option 2: Manual Setup
 
-1. **Clone and Setup Backend**
+**1. Clone Repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/thanhndv212/robotics-SOTA.git
 cd robotics-SOTA
+```
 
-# Backend setup
+**2. Setup and Start Backend**
+```bash
 cd backend
 pip install -r requirements.txt
-python ../scripts/setup_database.py  # Imports 47 labs
+python run_dev.py  # Starts on http://127.0.0.1:8080
 ```
 
-2. **Start Backend Server**
-```bash
-cd backend
-python -c "
-import sys, os
-sys.path.insert(0, '.')
-from app import create_app, db
-app = create_app()
-with app.app_context():
-    db.create_all()
-app.run(host='127.0.0.1', port=8080, debug=True)
-"
-```
-
-3. **Setup Frontend** (requires Node.js)
+**3. Setup and Start Frontend** (new terminal)
 ```bash
 cd frontend
-npm install          # Install React dependencies
-npm start           # Start development server
+npm install
+npm run dev  # Starts on http://localhost:3000
 ```
 
 ### Access the Application
-- **Frontend**: http://localhost:3000
+- **Frontend Dashboard**: http://localhost:3000
 - **Backend API**: http://127.0.0.1:8080
-- **Lab Data**: http://127.0.0.1:8080/api/labs
+- **Labs API Endpoint**: http://127.0.0.1:8080/api/labs
+- **Statistics**: http://127.0.0.1:8080/api/labs/stats
 
-## 🎛️ User Interface Controls
+### Production Build
+```bash
+# Frontend production build
+cd frontend
+npm run build
+npm start
 
-The frontend provides several toggle controls for different viewing modes:
+# Backend production (use gunicorn)
+cd backend
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:8080 'app:create_app()'
+```
 
-### View Mode Toggles
-- **Cards/List Toggle**: Switch between card view and table view
-- **Hierarchy Toggle**: 
-  - **Flat**: Shows all labs in a single list
-  - **Hierarchy**: Shows departments containing research groups
-- **Institution Grouping Toggle**:
-  - **Mixed**: Labs displayed individually
-  - **Grouped**: Labs grouped by institution in expandable cards
+## 🎛️ User Interface Features
 
-### Research Group Management
-- **Expand Departments**: Click on department cards to see research groups
-- **Create Groups**: Add new research groups within departments
-- **Edit Groups**: Modify existing research group information
-- **View Papers**: See publications associated with each research group
+### Dashboard Overview
+- **Metrics Summary**: Live statistics showing total labs, countries, papers, and active labs
+- **Search & Filters**: Real-time filtering by search term, country, and research focus area
+- **Lab Cards**: Responsive grid layout with lab information, PI, location, and focus areas
+- **Recent Papers**: Display of latest publications with PDF/ArXiv/DOI links (when available)
+- **Responsive Design**: Optimized for desktop, tablet, and mobile viewing
+
+### Features
+- **Smart Search**: Filter labs by name, PI, institution, or city
+- **Country Filter**: Dropdown with 24 countries to choose from
+- **Focus Area Filter**: Filter by specific research areas (manipulation, perception, etc.)
+- **Reset Filters**: Quick reset button to clear all filters
+- **Real-time Updates**: Instant filtering as you type or select options
+- **Paper Tracking**: Ready for integration with ArXiv and Google Scholar APIs
+
+### Coming Soon
+- Paper scraping from ArXiv and lab websites
+- Research trend analysis and visualization
+- Citation network graphs
+- Collaboration pattern analysis
 
 ## 📡 API Endpoints
 
 ### Labs
-- `GET /api/labs` - List all robotics labs
-- `GET /api/labs?limit=10&country=USA` - Filtered labs
-- `GET /api/labs/{id}` - Specific lab details
-- `GET /api/labs/hierarchy` - Hierarchical lab structure with departments and groups
-- `GET /api/labs/{id}/groups` - Get research groups within a department
-- `POST /api/labs/{id}/groups` - Create new research group within a department
+- `GET /api/labs` - List all robotics labs (171 total)
+  - Query params: `?include_papers=true&include_sub_groups=true`
+  - Returns: Array of lab objects with full details
+- `GET /api/labs?country=USA` - Filter labs by country
+- `GET /api/labs?focus_area=manipulation` - Filter by research focus
+- `GET /api/labs/{id}` - Get specific lab details by ID
+- `GET /api/labs/stats` - Get lab distribution statistics
+  - Total labs, countries, focus areas distribution
 
-### Papers (Coming Soon)
-- `GET /api/papers` - Research papers
-- `GET /api/papers?lab_id=1&year=2024` - Filtered papers
-
-### Trends (Coming Soon)  
-- `GET /api/trends` - Research trend analysis
-- `GET /api/trends?timeframe=2024` - Temporal trends
+### Papers (Database Ready)
+- `GET /api/papers` - List all research papers (ready for scraping)
+- `GET /api/papers?lab_id=1` - Papers from specific lab
+- `POST /api/papers` - Add new paper manually
+- `PUT /api/papers/{id}` - Update paper information
+- `DELETE /api/papers/{id}` - Remove paper
 
 ### Statistics
-- `GET /api/labs/stats` - Lab distribution statistics
-- `GET /api/papers/stats` - Publication metrics
+- `GET /api/labs/stats` - Lab statistics
+  - Total labs: 171
+  - Countries: 24
+  - Geographic distribution
+  - Focus areas breakdown
 
-## 🗺️ Map Features
+### Data Import
+- `POST /api/labs/import` - Import labs from CSV
+  - Body: `{"csv_path": "path/to/file.csv"}`
+  - Auto-geocoding and data normalization
 
-- **Geographic Visualization**: Interactive world map with lab locations
-- **Lab Markers**: Click markers to view lab details, PI, research focus
-- **Hierarchical Display**: Toggle between flat and hierarchical lab organization
-- **Institution Grouping**: Group labs by institution for better organization
-- **Research Group Cards**: Expandable cards showing research groups within institutions
-- **Country Clustering**: Visual grouping by research density
-- **Search & Filter**: Real-time filtering by name, country, research area
-- **Statistics Panel**: Live counts of labs, countries, research areas
+### Response Format
+```json
+{
+  "labs": [
+    {
+      "id": 1,
+      "name": "Berkeley Robot Learning Lab (RLL)",
+      "pi": "Pieter Abbeel",
+      "institution": "UC Berkeley",
+      "city": "Berkeley",
+      "country": "USA",
+      "latitude": 37.8719,
+      "longitude": -122.2585,
+      "focus_areas": ["Deep RL", "imitation learning", "sim2real"],
+      "website": "https://rll.berkeley.edu/",
+      "papers": []
+    }
+  ]
+}
+```
 
 ## 🧪 Development Status
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **Backend API** | ✅ Complete | Flask server with SQLite, 47 labs imported |
-| **Database Models** | ✅ Complete | Lab, Paper, Researcher, Citation entities |
-| **Hierarchical Labs** | ✅ Complete | Multi-level lab structure with departments and groups |
-| **Institution Grouping** | ✅ Complete | Group labs by institution with toggle controls |
-| **Research Group Management** | ✅ Complete | Create and manage research groups within departments |
-| **Frontend Structure** | ✅ Complete | React components with hierarchy and grouping support |
-| **Interactive Map** | 🔄 In Progress | Mapbox integration (needs API key) |
-| **Paper Tracking** | 📋 Planned | arXiv, Google Scholar automation |
+| **Backend API** | ✅ Complete | Flask server with CORS, SQLite database |
+| **Database** | ✅ Populated | 171 labs across 24 countries imported |
+| **Lab Models** | ✅ Complete | SQLAlchemy models with relationships |
+| **Paper Models** | ✅ Ready | Database schema ready for paper tracking |
+| **API Endpoints** | ✅ Complete | Labs CRUD, filtering, statistics |
+| **Data Import** | ✅ Complete | CSV import with 171 labs |
+| **Frontend Stack** | ✅ Complete | Next.js 14 + Tailwind CSS |
+| **Dashboard UI** | ✅ Complete | Lab cards, filters, metrics, search |
+| **Responsive Design** | ✅ Complete | Mobile-friendly layout |
+| **Production Build** | ✅ Validated | Successful build with 91.5 kB first load JS |
+| **Paper Scraping** | 📋 Planned | ArXiv, Google Scholar integration |
 | **Trend Analysis** | 📋 Planned | NLP-powered research trend detection |
+| **Citation Network** | 📋 Planned | Collaboration pattern visualization |
+| **Map Visualization** | 📋 Optional | Geographic lab distribution (optional feature) |
+
+### Recent Updates
+- ✅ Migrated from Create React App to Next.js 14
+- ✅ Replaced Ant Design with Tailwind CSS
+- ✅ Simplified component architecture
+- ✅ Improved build performance (1189ms compile time)
+- ✅ Removed unused CRA files and dependencies
+- ✅ Database populated with 171 labs from CSV
 
 ## 🛠️ Configuration
 
-### Environment Variables
-Create `.env` files:
+### Backend Configuration
 
-**Backend (.env)**:
-```
-DATABASE_URL=sqlite:///robotics_sota.db
+Create `backend/.env`:
+```bash
+DATABASE_URL=sqlite:///instance/robotics_sota.db
 FLASK_ENV=development
-SECRET_KEY=your-secret-key
+FLASK_DEBUG=True
+SECRET_KEY=your-secret-key-here
 ```
 
-**Frontend (.env)**:
-```
-REACT_APP_API_URL=http://127.0.0.1:8080/api
-REACT_APP_MAPBOX_TOKEN=your-mapbox-token  # Required for maps
+### Frontend Configuration
+
+Create `frontend/.env.local`:
+```bash
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8080/api
 ```
 
-### Mapbox Setup
-1. Sign up at [Mapbox](https://mapbox.com)
-2. Get your access token
-3. Add to frontend `.env` file
-4. Restart frontend: `npm start`
+### Environment Variables
+
+**Backend**:
+- `DATABASE_URL` - Database connection string (default: SQLite)
+- `FLASK_ENV` - Environment mode (development/production)
+- `FLASK_DEBUG` - Debug mode (True/False)
+- `SECRET_KEY` - Flask secret key for sessions
+
+**Frontend**:
+- `NEXT_PUBLIC_API_URL` - Backend API base URL
+
+### Database Configuration
+
+The system uses SQLite by default for development:
+- **Location**: `backend/instance/robotics_sota.db`
+- **Auto-created**: Database and tables created on first run
+- **Auto-import**: Labs imported from CSV on first run if database is empty
+
+For production, configure PostgreSQL:
+```bash
+DATABASE_URL=postgresql://user:password@localhost:5432/robotics_sota
+```
 
 ## 📁 Project Structure Details
 
 ```
+robotics-SOTA/
 ├── backend/
 │   ├── app/
-│   │   ├── __init__.py      # Flask app factory, SQLite config
+│   │   ├── __init__.py              # Flask app factory with CORS
 │   │   ├── models/
-│   │   │   └── __init__.py  # Lab, Paper, Researcher models
+│   │   │   └── __init__.py          # Lab, Paper, Researcher models
 │   │   ├── api/
-│   │   │   ├── labs.py      # Lab endpoints with filtering
-│   │   │   ├── papers.py    # Paper endpoints (ready)
-│   │   │   └── trends.py    # Trend analysis endpoints
+│   │   │   ├── labs.py              # Lab endpoints with filtering
+│   │   │   ├── papers.py            # Paper CRUD endpoints
+│   │   │   ├── trends.py            # Trend analysis (planned)
+│   │   │   └── statistics.py        # Statistics endpoints
 │   │   └── services/
-│   │       ├── lab_importer.py     # CSV import with geocoding
-│   │       ├── paper_tracker.py   # arXiv integration (planned)
-│   │       └── nlp_processor.py   # Trend analysis (planned)
-│   ├── run_dev.py           # Development server launcher
-│   └── robotics_sota.db    # SQLite database (47 labs)
-├── frontend/src/
+│   │       ├── lab_importer.py      # CSV import with validation
+│   │       ├── lab_paper_scraper.py # Paper scraping service
+│   │       └── analytics.py         # Analytics service
+│   ├── instance/
+│   │   └── robotics_sota.db         # SQLite database (171 labs)
+│   ├── run_dev.py                   # Development server launcher
+│   ├── requirements.txt             # Python dependencies
+│   └── tests/                       # Backend tests
+│
+├── frontend/
+│   ├── app/
+│   │   ├── layout.tsx               # Root layout with metadata
+│   │   ├── page.tsx                 # Home page
+│   │   └── globals.css              # Tailwind CSS imports
 │   ├── components/
-│   │   └── InteractiveMap.tsx  # Mapbox map component
-│   ├── services/
-│   │   └── api.ts           # Backend API integration
-│   └── App.tsx              # Main application UI
+│   │   └── dashboard/
+│   │       ├── LabsDashboard.tsx    # Main dashboard component
+│   │       ├── MetricsSummary.tsx   # Statistics cards
+│   │       ├── LabFilters.tsx       # Search and filter controls
+│   │       ├── LabList.tsx          # Lab grid container
+│   │       └── LabCard.tsx          # Individual lab card
+│   ├── lib/
+│   │   └── api.ts                   # API client with axios
+│   ├── types/
+│   │   └── lab.ts                   # TypeScript interfaces
+│   ├── .next/                       # Next.js build output
+│   ├── next.config.mjs              # Next.js configuration
+│   ├── tailwind.config.ts           # Tailwind configuration
+│   ├── tsconfig.json                # TypeScript configuration
+│   └── package.json                 # Node.js dependencies
+│
 ├── data/
-│   └── robot_learning_labs_directory.csv  # Source data (50 labs)
+│   └── robot_learning_labs_directory.csv  # Source data (178 labs)
+│
 ├── scripts/
-│   └── setup_database.py   # Database initialization
-└── start-dev.sh            # One-command development launcher
+│   └── setup_database.py            # Database initialization
+│
+├── start-dev.sh                     # Development environment launcher
+├── README.md                        # This file
+└── LICENSE                          # MIT License
 ```
 
-### Prerequisites
-- Python 3.9+
-- Node.js 16+
-- PostgreSQL
-- Docker (optional)
+## 🧪 Development
 
-### Development Setup
+### Running the Application
 
-1. **Clone and setup backend**:
+**Development Mode** (with hot reload):
+```bash
+bash start-dev.sh  # Both backend and frontend
+```
+
+**Backend Only**:
 ```bash
 cd backend
-pip install -r requirements.txt
-python run.py
+python run_dev.py
 ```
 
-2. **Setup frontend**:
+**Frontend Only**:
 ```bash
 cd frontend
-npm install
-npm start
+npm run dev
 ```
 
-3. **Import initial data**:
+### Building for Production
+
+**Frontend Production Build**:
 ```bash
-python scripts/import_labs.py data/robot_learning_labs_directory.csv
+cd frontend
+npm run build     # Creates optimized production build
+npm run start     # Serves production build
+```
+
+**Backend Production**:
+```bash
+cd backend
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:8080 'app:create_app()'
+```
+
+### Running Tests
+
+**Backend Tests**:
+```bash
+cd backend
+pytest tests/
+```
+
+**Frontend Tests** (coming soon):
+```bash
+cd frontend
+npm test
+```
+
+### Code Quality
+
+**Linting**:
+```bash
+cd frontend
+npm run lint      # ESLint for TypeScript/React
+```
+
+**Type Checking**:
+```bash
+cd frontend
+npm run type-check
+```
+
+### Database Management
+
+**View Database**:
+```bash
+cd backend
+python -c "
+from app import create_app, db
+from app.models import Lab
+app = create_app()
+with app.app_context():
+    labs = Lab.query.all()
+    print(f'Total labs: {len(labs)}')
+    for lab in labs[:5]:
+        print(f'- {lab.name} ({lab.country})')
+"
+```
+
+**Reset Database**:
+```bash
+cd backend
+rm instance/robotics_sota.db
+python run_dev.py  # Will recreate and import
 ```
 
 ## 📈 Usage
 
-1. **Browse Labs**: Interactive map with lab information and research focus
-2. **Organize by Hierarchy**: Toggle hierarchical view to see departments and research groups
-3. **Group by Institution**: Use institution grouping to see labs organized by university/company
-4. **Manage Research Groups**: Create and edit research groups within larger institutions
-5. **Search Papers**: Real-time search across tracked publications
-6. **Analyze Trends**: View emerging research directions and hot topics
-7. **Track Citations**: Monitor paper impact and citation networks
-8. **Export Data**: Download filtered results in various formats
+1. **Browse Labs**: 
+   - View all 171 labs in responsive card layout
+   - See lab name, PI, institution, location, and research focus
+   
+2. **Search & Filter**:
+   - Search by name, PI, institution, or city
+   - Filter by country (24 countries available)
+   - Filter by research focus area (manipulation, perception, etc.)
+   - Real-time results as you type
+
+3. **View Details**:
+   - Each lab card shows key information
+   - Focus areas displayed as tags
+   - Website links when available
+   - Ready for paper listings (coming soon)
+
+4. **Statistics Dashboard**:
+   - Live metrics: total labs, countries represented
+   - Geographic distribution visualization
+   - Research focus breakdown
+   - Updated timestamp
+
+5. **API Integration**:
+   - Use REST API for custom applications
+   - Filter and query labs programmatically
+   - Export data in JSON format
+   - Ready for paper tracking integration
+
+### Next Steps
+- Integrate ArXiv paper scraping
+- Add Google Scholar citation tracking
+- Implement research trend analysis
+- Add collaboration network visualization
+- Enable paper search and filtering
 
 ## 🧪 Development
 
-### Running Tests
-```bash
-pytest tests/
-npm test  # Frontend tests
-```
-
-### API Documentation
-- Backend API: `http://localhost:5000/docs`
-- Frontend: `http://localhost:3000`
+### Running the Application
 
 ## 📝 Contributing
 
