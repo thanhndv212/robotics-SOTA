@@ -1,70 +1,145 @@
-from flask import Blueprint, request, jsonify
+import math
+
+from flask import Blueprint, current_app, jsonify, request
 from app import db
 from app.models import Lab
 from sqlalchemy import or_
 import asyncio
 import threading
 import requests
-from xml.etree import ElementTree as ET
 from app.services.lab_paper_scraper import LabPaperScraper
+from app.services.analytics import build_lab_summary_payload
 
 labs_bp = Blueprint('labs', __name__)
+
+
+def _str_to_bool(value: str, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.lower() in {"1", "true", "yes", "on"}
+
+
+def _filter_by_focus_area(labs, focus_area: str):
+    if not focus_area:
+        return labs
+
+    focus_normalized = focus_area.strip().lower()
+    filtered = []
+    for lab in labs:
+        areas = getattr(lab, "focus_areas_list", [])
+        if any(focus_normalized in area.lower() for area in areas):
+            filtered.append(lab)
+    return filtered
 
 
 @labs_bp.route('/', methods=['GET'])
 def get_labs():
     """Get all labs with optional filtering and hierarchical support"""
     try:
-        # Get query parameters
+        # Query parameters
         country = request.args.get('country')
         focus_area = request.args.get('focus_area')
         search = request.args.get('search')
-        include_papers = request.args.get(
-            'include_papers', 'false'
-        ).lower() == 'true'
-        include_sub_groups = request.args.get(
-            'include_sub_groups', 'false'
-        ).lower() == 'true'
-        lab_type = request.args.get('type', None)  # independent/group/department
-        
-        # Build query
+        lab_type = request.args.get("type")
+        sort = request.args.get("sort", "name")
+        page = max(request.args.get("page", 1, type=int) or 1, 1)
+        per_page = request.args.get("per_page", 25, type=int) or 25
+        per_page = max(1, min(per_page, 100))
+        include_papers = _str_to_bool(
+            request.args.get("include_papers"),
+            False,
+        )
+        include_sub_groups = _str_to_bool(
+            request.args.get("include_sub_groups"),
+            False,
+        )
+
         query = Lab.query
-        
+
         if lab_type:
             query = query.filter(Lab.lab_type == lab_type)
-        
+
         if country:
             query = query.filter(Lab.country == country)
-            
-        if focus_area:
-            query = query.filter(Lab.focus_areas.any(focus_area))
-            
+
         if search:
+            like_term = f"%{search.strip()}%"
             query = query.filter(
                 or_(
-                    Lab.name.ilike(f'%{search}%'),
-                    Lab.institution.ilike(f'%{search}%'),
-                    Lab.pi.ilike(f'%{search}%')
+                    Lab.name.ilike(like_term),
+                    Lab.institution.ilike(like_term),
+                    Lab.pi.ilike(like_term),
                 )
             )
-        
+
+        if sort == "recent":
+            query = query.order_by(Lab.updated_at.desc())
+        elif sort == "country":
+            query = query.order_by(Lab.country.asc(), Lab.name.asc())
+        else:
+            query = query.order_by(Lab.name.asc())
+
         labs = query.all()
-        return jsonify([
-            lab.to_dict(
-                include_papers=include_papers,
-                include_sub_groups=include_sub_groups
-            ) for lab in labs
-        ])
-        
+        labs = _filter_by_focus_area(labs, focus_area)
+
+        total_labs = len(labs)
+        total_pages = max(1, math.ceil(total_labs / per_page))
+        if page > total_pages:
+            page = total_pages
+
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_labs = labs[start:end]
+
+        payload = {
+            "labs": [
+                lab.to_dict(
+                    include_papers=include_papers,
+                    include_sub_groups=include_sub_groups,
+                )
+                for lab in paginated_labs
+            ],
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total_labs,
+                "total_pages": total_pages,
+            },
+            "filters": {
+                "country": country,
+                "focus_area": focus_area,
+                "search": search,
+                "type": lab_type,
+                "sort": sort,
+            },
+        }
+
+        return jsonify(payload)
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.exception("Failed to fetch labs")
+        return jsonify({"error": str(e)}), 500
+
+
+@labs_bp.route("/summary", methods=["GET"])
+def get_labs_summary():
+    """Return aggregated statistics for labs."""
+    try:
+        labs = Lab.query.all()
+        payload = build_lab_summary_payload(labs)
+
+        return jsonify(payload)
+
+    except Exception as exc:
+        current_app.logger.exception("Failed to build lab summary")
+        return jsonify({"error": str(exc)}), 500
 
 
 @labs_bp.route('/<int:lab_id>', methods=['GET'])
 def get_lab(lab_id):
     """Get a specific lab by ID"""
     try:
-        include_papers = request.args.get('include_papers', 'true').lower() == 'true'
+        include_papers = _str_to_bool(request.args.get("include_papers"), True)
         lab = Lab.query.get_or_404(lab_id)
         return jsonify(lab.to_dict(include_papers=include_papers))
     except Exception as e:
@@ -166,37 +241,40 @@ def delete_lab(lab_id):
 
 @labs_bp.route('/sync-csv', methods=['POST'])
 def sync_with_csv():
-    """Sync database with CSV file - updates existing entries and adds new ones"""
+    """Sync database with CSV updates for existing entries and additions."""
     try:
         import csv
         import os
-        
-        csv_path = os.path.join(os.path.dirname(__file__), '../../../data/robot_learning_labs_directory.csv')
-        
+
+        csv_path = os.path.join(
+            os.path.dirname(__file__),
+            "../../../data/robot_learning_labs_directory.csv",
+        )
+
         if not os.path.exists(csv_path):
             return jsonify({'error': 'CSV file not found'}), 404
-        
+
         with open(csv_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             csv_labs = list(reader)
-        
+
         updated_count = 0
         added_count = 0
         removed_count = 0
-        
+
         # Create a mapping of CSV labs by name and PI for exact matching
         csv_lab_map = {}
         for row in csv_labs:
             key = f"{row['Lab Name']}||{row['PI']}"
             csv_lab_map[key] = row
-        
+
         # Get all existing labs
         existing_labs = Lab.query.all()
         existing_lab_map = {}
         for lab in existing_labs:
             key = f"{lab.name}||{lab.pi}"
             existing_lab_map[key] = lab
-        
+
         # Update existing labs and add new ones
         for key, csv_row in csv_lab_map.items():
             if key in existing_lab_map:
@@ -221,20 +299,22 @@ def sync_with_csv():
                 )
                 db.session.add(lab)
                 added_count += 1
-        
-        # Remove old "Multiple PIs" entries that have been replaced with individual PIs
-        labs_with_individual_pis = {row['Lab Name'] for row in csv_labs if row['PI'] != 'Multiple PIs'}
+
+        # Remove "Multiple PIs" entries replaced with individual PI records
+        labs_with_individual_pis = {
+            row["Lab Name"] for row in csv_labs if row["PI"] != "Multiple PIs"
+        }
         multiple_pi_labs = Lab.query.filter(
             Lab.pi == 'Multiple PIs',
             Lab.name.in_(labs_with_individual_pis)
         ).all()
-        
+
         for lab in multiple_pi_labs:
             db.session.delete(lab)
             removed_count += 1
-        
+
         db.session.commit()
-        
+
         return jsonify({
             'message': 'Database synced with CSV successfully',
             'stats': {
@@ -245,7 +325,7 @@ def sync_with_csv():
                 'total_db_labs': Lab.query.count()
             }
         })
-        
+
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
@@ -256,27 +336,32 @@ def get_lab_stats():
     """Get lab statistics"""
     try:
         stats = {
-            'total_labs': Lab.query.count(),
-            'countries': Lab.query.with_entities(Lab.country).distinct().count(),
-            'focus_areas': []
+            "total_labs": Lab.query.count(),
+            "countries": Lab.query.with_entities(Lab.country)
+            .distinct()
+            .count(),
+            "focus_areas": [],
         }
-        
+
         # Get focus area distribution
         labs_with_areas = Lab.query.filter(Lab.focus_areas.isnot(None)).all()
         area_counts = {}
-        
+
         for lab in labs_with_areas:
-            for area in lab.focus_areas or []:
+            for area in lab.focus_areas_list:
                 area_counts[area] = area_counts.get(area, 0) + 1
-        
-        stats['focus_areas'] = [
-            {'area': area, 'count': count}
-            for area, count in sorted(area_counts.items(), 
-                                    key=lambda x: x[1], reverse=True)
+
+        stats["focus_areas"] = [
+            {"area": area, "count": count}
+            for area, count in sorted(
+                area_counts.items(),
+                key=lambda item: item[1],
+                reverse=True,
+            )
         ]
-        
+
         return jsonify(stats)
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -318,15 +403,15 @@ def scrape_papers():
         lab_ids = data.get('lab_ids', [])
         sources = data.get('sources', ['arxiv'])  # arxiv, scholar, website
         max_papers = data.get('max_papers', 5)
-        
+
         if not lab_ids:
             return jsonify({'error': 'No lab IDs provided'}), 400
-        
+
         # Get labs
         labs = Lab.query.filter(Lab.id.in_(lab_ids)).all()
         if not labs:
             return jsonify({'error': 'No valid labs found'}), 404
-        
+
         def run_scraping():
             """Run scraping in background thread"""
             async def async_scrape():
@@ -338,12 +423,14 @@ def scrape_papers():
                         lab_results = await scraper.scrape_lab_papers(
                             lab, sources=sources, max_papers=max_papers
                         )
-                        results.append({
-                            'lab_id': lab.id,
-                            'lab_name': lab.name,
-                            'papers_found': lab_results,  # lab_results is already an int
-                            'success': True
-                        })
+                        results.append(
+                            {
+                                "lab_id": lab.id,
+                                "lab_name": lab.name,
+                                "papers_found": lab_results,
+                                "success": True,
+                            }
+                        )
                     except Exception as e:
                         results.append({
                             'lab_id': lab.id,
@@ -352,32 +439,32 @@ def scrape_papers():
                             'success': False
                         })
                 return results
-            
+
             return asyncio.run(async_scrape())
-        
+
         # Run scraping in background thread
         results = []
-        
+
         def background_scrape():
             nonlocal results
             results = run_scraping()
-        
+
         thread = threading.Thread(target=background_scrape)
         thread.start()
         thread.join(timeout=60)  # 60 second timeout
-        
+
         if thread.is_alive():
             return jsonify({
                 'message': 'Scraping started in background',
                 'status': 'running'
             }), 202
-        
+
         return jsonify({
             'message': 'Paper scraping completed',
             'results': results,
             'status': 'completed'
         })
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
 from celery import Celery
+from sqlalchemy.pool import StaticPool
 import os
 from dotenv import load_dotenv
 
@@ -26,6 +27,13 @@ def create_app(config_name='development'):
     # Configuration
     if config_name == 'production':
         app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+    elif config_name == 'testing':
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'connect_args': {'check_same_thread': False},
+            'poolclass': StaticPool,
+        }
+        app.config['TESTING'] = True
     else:
         # Use SQLite for development
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///robotics_sota.db'
@@ -41,12 +49,14 @@ def create_app(config_name='development'):
     CORS(app)
 
     # Register blueprints
+    from app.api.analytics import analytics_bp
     from app.api.labs import labs_bp
     from app.api.papers import papers_bp
     from app.api.trends import trends_bp
     from app.api.statistics import statistics_bp
 
     app.register_blueprint(labs_bp, url_prefix='/api/labs')
+    app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
     app.register_blueprint(papers_bp, url_prefix='/api/papers')
     app.register_blueprint(trends_bp, url_prefix='/api/trends')
     app.register_blueprint(statistics_bp, url_prefix="/api/statistics")

@@ -1,9 +1,13 @@
 #!/bin/bash
 
-# Robotics SOTA Development Environment Launcher
-# This script starts both the backend and frontend in development mode
+set -euo pipefail
 
-echo "🚀 Starting Robotics SOTA Development Environment..."
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="${ROOT_DIR}/backend"
+FRONTEND_DIR="${ROOT_DIR}/frontend"
+
+BACKEND_PID=""
+FRONTEND_PID=""
 
 # Colors for output
 RED='\033[0;31m'
@@ -12,38 +16,51 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Check prerequisites
-echo -e "${BLUE}📋 Checking prerequisites...${NC}"
+echo "� Starting Robotics SOTA Development Environment..."
 
-# Check if Node.js is installed
-if ! command -v node &> /dev/null; then
-    echo -e "${YELLOW}⚠️ Node.js not found in current environment${NC}"
-    echo "Checking if nodejs-env conda environment exists..."
-    
-    if conda env list | grep -q "nodejs-env"; then
-        echo -e "${GREEN}✅ Found nodejs-env conda environment${NC}"
-        NODE_ENV_EXISTS=true
+cleanup() {
+    echo -e "\n${YELLOW}🛑 Shutting down services...${NC}"
+
+    if [[ -n "${FRONTEND_PID:-}" ]] && ps -p "${FRONTEND_PID}" > /dev/null 2>&1; then
+        kill "${FRONTEND_PID}" 2>/dev/null || true
+        echo -e "${GREEN}✅ Frontend stopped${NC}"
+    fi
+
+    if [[ -n "${BACKEND_PID:-}" ]] && ps -p "${BACKEND_PID}" > /dev/null 2>&1; then
+        kill "${BACKEND_PID}" 2>/dev/null || true
+        echo -e "${GREEN}✅ Backend stopped${NC}"
+    fi
+
+    echo -e "${GREEN}👋 Development environment stopped${NC}"
+    exit 0
+}
+
+trap cleanup INT TERM
+
+echo -e "${BLUE}� Checking prerequisites...${NC}"
+
+USE_CONDA_NODE=false
+if ! command -v node >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️ Node.js not found in current PATH${NC}"
+    if command -v conda >/dev/null 2>&1 && conda env list | grep -q "nodejs-env"; then
+        echo -e "${GREEN}✅ Using nodejs-env conda environment for Node.js${NC}"
+        USE_CONDA_NODE=true
     else
         echo -e "${RED}❌ Node.js is not installed${NC}"
-        echo "Please install Node.js via conda environment:"
+        echo "Install it via conda or your package manager, e.g.:"
         echo "  conda create -n nodejs-env nodejs=18.20.5 -c conda-forge"
-        echo "Or install via your package manager:"
-        echo "  macOS: brew install node"
-        echo "  Ubuntu: sudo apt install nodejs npm"
+        echo "  brew install node"
+        echo "  sudo apt install nodejs npm"
         exit 1
     fi
-else
-    NODE_ENV_EXISTS=false
 fi
 
-# Check if Python is available
-if ! command -v python &> /dev/null && ! command -v python3 &> /dev/null; then
+if ! command -v python3 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1; then
     echo -e "${RED}❌ Python is not installed${NC}"
     exit 1
 fi
 
-# Use python3 if available, otherwise python
-if command -v python3 &> /dev/null; then
+if command -v python3 >/dev/null 2>&1; then
     PYTHON_CMD="python3"
 else
     PYTHON_CMD="python"
@@ -51,177 +68,47 @@ fi
 
 echo -e "${GREEN}✅ Prerequisites check passed${NC}"
 
-# Function to cleanup background processes
-cleanup() {
-    echo -e "\n${YELLOW}🛑 Shutting down services...${NC}"
-    if [ ! -z "$BACKEND_PID" ]; then
-        kill $BACKEND_PID 2>/dev/null
-        echo -e "${GREEN}✅ Backend stopped${NC}"
-    fi
-    if [ ! -z "$FRONTEND_PID" ]; then
-        kill $FRONTEND_PID 2>/dev/null
-        echo -e "${GREEN}✅ Frontend stopped${NC}"
-    fi
-    echo -e "${GREEN}👋 Development environment stopped${NC}"
-    exit 0
-}
-
-# Set up signal handlers
-trap cleanup SIGINT SIGTERM
-
-# Function to setup and populate database
-setup_database() {
-    echo -e "${BLUE}🗄️ Setting up database...${NC}"
-    cd backend
-    $PYTHON_CMD -c "
-import sys, os, csv
-sys.path.insert(0, '.')
-
-from app import create_app, db
-from app.models import Lab
-
-app = create_app()
-
-with app.app_context():
-    # Create tables
-    db.create_all()
-    print('✅ Database tables created')
-    
-    # Check if labs already exist
-    lab_count = Lab.query.count()
-    print(f'📊 Current labs in database: {lab_count}')
-    
-    if lab_count == 0:
-        print('📥 No labs found, importing from CSV...')
-        csv_path = '../data/robot_learning_labs_directory.csv'
-        
-        if os.path.exists(csv_path):
-            imported_count = 0
-            with open(csv_path, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    lab = Lab(
-                        name=row['Lab Name'],
-                        pi=row['PI'],
-                        institution=row['Institution'],
-                        city=row['City'],
-                        country=row['Country'],
-                        focus_areas=row['Focus'],
-                        website=row['Link']
-                    )
-                    db.session.add(lab)
-                    imported_count += 1
-            
-            db.session.commit()
-            print(f'✅ Successfully imported {imported_count} labs from CSV')
-        else:
-            print('⚠️ CSV file not found at ../data/robot_learning_labs_directory.csv')
-    else:
-        print('✅ Database already contains labs')
-        
-        # Option to sync with CSV (update existing entries)
-        csv_path = '../data/robot_learning_labs_directory.csv'
-        if os.path.exists(csv_path):
-            with open(csv_path, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                csv_labs = list(reader)
-                csv_count = len(csv_labs)
-                
-            print(f'� CSV has {csv_count} labs, database has {lab_count}')
-            
-            # Auto-sync if CSV has significantly more entries or if explicitly requested
-            sync_needed = csv_count > lab_count + 5
-            if sync_needed:
-                print('🔄 Auto-syncing database with CSV (significant differences detected)...')
-                print('   This will update existing labs and add new ones.')
-                
-                # Run the sync via API call (assuming server will be running)
-                import requests
-                import time
-                
-                # Small delay to ensure server starts
-                print('   Starting sync after backend initialization...')
-                time.sleep(2)
-                
-                try:
-                    response = requests.post('http://127.0.0.1:8080/api/labs/sync-csv', timeout=30)
-                    if response.status_code == 200:
-                        result = response.json()
-                        print(f'   ✅ Sync completed: {result.get(\"stats\", {})}')
-                    else:
-                        print(f'   ⚠️ Sync failed: {response.text}')
-                except Exception as e:
-                    print(f'   ⚠️ Sync will be available via API endpoint: {e}')
-            else:
-                print('✅ Database appears up to date with CSV')
-                print('💡 You can manually sync anytime with: curl -X POST http://127.0.0.1:8080/api/labs/sync-csv')
-        else:
-            print('⚠️ CSV file not found for sync check')
-    
-    print('🗄️ Database setup complete!')
-"
-    cd ..
-}
-
-# Setup database before starting backend
-setup_database
-
-# Start backend
-echo -e "${BLUE}🐍 Starting Python backend server...${NC}"
-cd backend
-$PYTHON_CMD -c "
-import sys, os
-sys.path.insert(0, '.')
-os.chdir('$(pwd)')
-
-from app import create_app
-
-app = create_app()
-print('🚀 Starting Robotics SOTA backend server...')
-print('📊 Database:', app.config.get('SQLALCHEMY_DATABASE_URI', 'Not configured'))
-print('🌐 Backend available at: http://127.0.0.1:8080')
-print('📋 API endpoints:')
-print('  - GET /api/labs - List all robotics labs')
-print('  - GET /api/papers - List papers (when data available)')  
-print('  - GET /api/trends - List research trends')
-app.run(host='127.0.0.1', port=8080, debug=True)
-" &
+echo -e "${BLUE}🐍 Starting Python backend via run_dev.py...${NC}"
+pushd "${BACKEND_DIR}" >/dev/null
+"${PYTHON_CMD}" run_dev.py --host 127.0.0.1 --port 8080 --debug &
 BACKEND_PID=$!
-cd ..
+popd >/dev/null
 
-# Wait for backend to start
-sleep 3
+echo -e "${BLUE}⏳ Waiting for backend readiness...${NC}"
+BACKEND_READY=false
+for attempt in {1..10}; do
+    if curl -sSf http://127.0.0.1:8080/api/labs >/dev/null 2>&1; then
+        BACKEND_READY=true
+        break
+    fi
+    sleep 1
+done
 
-# Check if backend started successfully
-if ! curl -s http://127.0.0.1:8080/api/labs > /dev/null 2>&1; then
-    echo -e "${YELLOW}⚠️ Backend may be starting up, waiting...${NC}"
-    sleep 2
+if [[ "${BACKEND_READY}" == true ]]; then
+    echo -e "${GREEN}✅ Backend is responding at http://127.0.0.1:8080${NC}"
+else
+    echo -e "${YELLOW}⚠️ Backend is still starting; continuing anyway.${NC}"
 fi
 
-# Start frontend
-echo -e "${BLUE}⚛️ Starting React frontend...${NC}"
-cd frontend
+echo -e "${BLUE}⚛️ Starting Next.js frontend...${NC}"
+pushd "${FRONTEND_DIR}" >/dev/null
 
-# Install dependencies if node_modules doesn't exist
-if [ ! -d "node_modules" ]; then
+if [[ ! -d "node_modules" ]]; then
     echo -e "${YELLOW}📦 Installing frontend dependencies...${NC}"
-    if [ "$NODE_ENV_EXISTS" = true ]; then
-        echo -e "${BLUE}Using conda nodejs-env environment...${NC}"
+    if [[ "${USE_CONDA_NODE}" == true ]]; then
         conda run -n nodejs-env npm install
     else
         npm install
     fi
 fi
 
-# Start frontend development server
-echo -e "${GREEN}🌐 Starting frontend development server...${NC}"
-if [ "$NODE_ENV_EXISTS" = true ]; then
-    conda run -n nodejs-env npm start &
+if [[ "${USE_CONDA_NODE}" == true ]]; then
+    conda run -n nodejs-env npm run dev &
 else
-    npm start &
+    npm run dev &
 fi
 FRONTEND_PID=$!
-cd ..
+popd >/dev/null
 
 echo -e "${GREEN}🎉 Development environment started successfully!${NC}"
 echo -e "${GREEN}📱 Frontend: http://localhost:3000${NC}"
@@ -230,5 +117,4 @@ echo -e "${GREEN}📊 API Docs: http://127.0.0.1:8080/api/labs${NC}"
 echo
 echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
 
-# Wait for user to stop
 wait
